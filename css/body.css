@@ -1,0 +1,20 @@
+@import url(https://fonts.googleapis.com/css?family=Exo+2:300,300italic,200,200italic,400,400italic,500,500italic,600,600italic,700,700italic,900);
+@import url(https://fonts.googleapis.com/css?family=Karla:400);
+
+body {
+	background-color: #000000;
+	font-family: "Exo 2", sans-serif;
+	color: #ffffff;
+	
+	margin: 0;
+	padding: 0;
+}
+
+a {
+	color: white;
+}
+
+iframe {
+  border: none;
+  width: 100%;
+}

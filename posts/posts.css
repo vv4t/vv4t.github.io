@@ -1,0 +1,35 @@
+.content {
+  text-align: center;
+}
+
+.post {
+  border-bottom: 1px solid #3e3e3e;
+  width: 40%;
+  margin-top: 2%;
+  text-align: center;
+  display: inline-block;
+}
+
+.post > h2 {
+  font-family: "Exo 2", consolas;
+  font-weight: 400;
+  font-size: 16pt;
+}
+
+.post > p {
+  color: #b3b3b3;
+  font-family: "Karla", sans-serif;
+  margin: 3%;
+  text-align: justify;
+  font-size: 11pt;
+  line-height: 1.5em;
+  opacity: 1.0;
+}
+
+.post:hover > p {
+  color: #5e5e5e;
+}
+
+.post:hover > h2 {
+  color: #b3b3b3;
+}

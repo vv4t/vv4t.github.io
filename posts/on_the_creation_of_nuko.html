@@ -1,0 +1,92 @@
+<html>
+	<head>
+		<title>PROJECTS - UOKKU Games</title>
+		<link rel="shortcut icon" type="image/png" href="/assets/favicon.png"/>
+		<link rel="stylesheet" href="/css/page.css">
+		<link rel="stylesheet" href="article.css">
+		<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.0/css/all.css" integrity="sha384-lZN37f5QGtY3VHgisS14W3ExzMWZxybE1SJSEsQp9S+oqd12jhcu+A56Ebc1zFSJ" crossorigin="anonymous">
+		<meta charset="utf-8">
+	</head>
+	<body>
+    <iframe src="/nav.html"></iframe>
+		<div class="main">
+      <h1 id="on-the-creation-of-nuko---part-i---collision">On the Creation of NUKO - Part I - COLLISION</h1>
+
+<h2 id="introduction">INTRODUCTION</h2>
+
+<p>NUKO is the cumulative product of the past four or so years of studying game
+engine development. It compiles all my knowledge of rendering, physics and
+networking <del>not sound (yet)</del> into a single wholly completed project.</p>
+
+<p>Perhaps the catalyst for me choosing to pursue this project was finally being able to
+write physics in 3D.</p>
+
+<p>Up until then, I had written several demos including 3D graphics using OpenGL,
+however, I could only noclip around the geometry I had loaded in. Other games
+using 3D graphics I had developed, such as <em>Aechmea</em>, hid behind the facade of
+3D graphics while actually operating on 2D logic such as the use of a flat grid
+for tile collision. As a result, the maps were limited to being flat and blocky.</p>
+
+<p>However, a small demo I had been working on a few months prior aimed to solve
+this.</p>
+
+<h2 id="separating-axis-theorem-and-binary-space-partitioning">SEPARATING AXIS THEOREM AND BINARY SPACE PARTITIONING</h2>
+
+<p>The inception of what would become NUKO can actually be traced back to almost
+two years before its actual creation. It was essentially born out of attempting
+to solve collision in a 3D environment.</p>
+
+<table>
+<thead>
+<tr>
+<th style="text-align: center"><img src="assets/on_the_creation_of_nuko/nuko_old.jpg" alt="nuko_old" /></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td style="text-align: center">A screenshot of an early version of NUKO when it was still a 3D collision demo</td>
+</tr>
+</tbody>
+</table>
+
+<p>NUKO began as a project to test if I could combine Separating Axis Theorem (SAT)
+and Binary Space Partitioning (BSP) to create an efficient collision algorithm.</p>
+
+<p>The idea spawned from trying to implement DOOM&#8217;s binary space partitioning
+rendering algorithm where space was divided into partitions stored in a binary
+tree.</p>
+
+<p>A map in DOOM was essentially composed of lines or &#8220;segments&#8221;. These were
+abstracted into planes or &#8220;linedefs&#8221;, essentially the line but stretching
+infinitely. The space was then split in half by a plane into the space in front
+of it and the space behind it. This could then be represented in a binary tree
+where each node is a plane and its two children are the front and back space.</p>
+
+<p>A tree traversal, such as checking the player&#8217;s position, would involve
+beginning with a node, checking if the position was behind or above the
+node&#8217;s plane and the corresponding child node would be walked into. This was
+applied recursively until an leaf node was reached.</p>
+
+<p>It suddenly clicked to me that, performing a series of plane tests on a position
+to determine if it occupied a certain space, was essentially collision.</p>
+
+<p>A general convex hull collision algorithm, Separating Axis Theorem, used a
+similar principle &#8211; that between two convex hulls, there would be a plane of
+separation if they were not colliding, i.e. if the closest vertex to the shape
+(position) was in front of any of the hull&#8217;s planes, it was not colliding.</p>
+
+<p>With this general idea, I began writing up some of the first iterations of NUKO.</p>
+
+<h2 id="generating-a-bsp">GENERATING A BSP</h2>
+
+<p>Before any collision algorithm could be written however, the BSP itself would
+have be generated. This required an algorithm which could turn 3D geometry into
+a BSP.</p>
+
+<p>Out of all things, this was the most problematic and would come
+to haunt me throughout its creation.</p>
+
+		</div>
+	</body>
+</html>

@@ -1,0 +1,26 @@
+.main {
+  text-align: center;
+}
+
+.main > h1 {
+  font-family: "Exo 2", consolas;
+  font-weight: 200;
+  font-size: 32pt;
+  text-align: center;
+}
+
+.main > p {
+  color: white;
+  width: 60%;
+  margin-left: 20%;
+  text-align: justify;
+  letter-spacing: 0.1em;
+  line-height: 1.5em;
+  font-size: 13pt;
+  font-weight: 200;
+  font-family: "Karla";
+}
+
+.main > table {
+  width: 100%;
+}

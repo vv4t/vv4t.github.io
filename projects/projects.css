@@ -1,0 +1,55 @@
+.game {
+	width: 95%;
+	height: 40%;
+  
+  border: 1px solid gray;
+  margin-bottom: 1%;
+  image-rendering: smooth;
+	background-repeat: no-repeat;
+	background-size: cover;
+  display: inline-block;
+  text-align: left;
+  
+	transition: 0.5s;
+	filter: brightness(100%);
+}
+
+.game:hover {
+	filter: brightness(90%);
+	cursor: pointer;
+}
+
+.game > .name {
+  width: 44%;
+  height: 100%;
+  display: inline-block;
+  
+  transition: 0.5s;
+}
+
+.game:hover > .name {
+  width: 40%;
+  opacity: 0.5;
+}
+
+.game > .name > h2 {
+  font-family: "Exo 2", consolas;
+  font-weight: 200;
+  font-size: 32pt;
+  text-align: center;
+}
+
+.game > .name > p {
+  font-family: "Karla";
+  margin-left: 10%;
+  margin-right: 10%;
+  text-align: justify;
+  font-size: 12pt;
+  line-height: 1.5em;
+  
+  opacity: 1.0;
+}
+
+.game:hover > .name > p {
+  opacity: 0;
+}

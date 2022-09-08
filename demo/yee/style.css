@@ -1,0 +1,14 @@
+body {
+  text-align: center;
+}
+
+textarea {
+  height: 640px;
+  width: 400px;
+  resize: none;
+  font-size: 0.8em;
+}
+
+label {
+  font-size: 1.4em;
+}

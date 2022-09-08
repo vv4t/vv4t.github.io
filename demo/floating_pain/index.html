@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Ao2DG</title>
+    <link rel="stylesheet" href="style.css">
+  </head>
+  <body>
+    <script src="src/main.js" type="module"></script>
+    <div class="config">
+      CONTROLS
+      <table>
+        <tr>
+          <th>ACTION</th>
+          <th>KEY</th>
+        </tr>
+        <tr>
+          <td>FORWARD</td>
+          <td><input type="text" id="forward" value="W"></td>
+        </tr>
+        <tr>
+          <td>LEFT</td>
+          <td><input type="text" id="left" value="A"></td>
+        </tr>
+        <tr>
+          <td>BACK</td>
+          <td><input type="text" id="back" value="S"></td>
+        </tr>
+        <tr>
+          <td>RIGHT</td>
+          <td><input type="text" id="right" value="D"></td>
+        </tr>
+        <tr>
+          <td>GAS</td>
+          <td><input type="text" id="gas" value="SHIFT"></td>
+        </tr>
+        <tr>
+          <td>LEFT HOOK</td>
+          <td><input type="text" id="left_hook" value="Q"></td>
+        </tr>
+        <tr>
+          <td>RIGHT HOOK</td>
+          <td><input type="text" id="right_hook" value="E"></td>
+        </tr>
+        <tr>
+          <td>REEL OUT</td>
+          <td><input type="text" id="reel_out" value="ALT"></td>
+        </tr>
+        <tr>
+          <td>REEL IN</td>
+          <td><input type="text" id="reel_in" value="SPACE"></td>
+        </tr>
+        <tr>
+          <td>RESTART</td>
+          <td><input type="text" id="restart" value="T"></td>
+        </tr>
+        <tr>
+          <td>CHANGE CAMERA</td>
+          <td><input type="text" id="change_camera" value="C"></td>
+        </tr>
+        <tr>
+          <td>SENSITIVITY</td>
+          <td><input type="range" id="sensitivity" min="1" max="50"></td>
+        </tr>
+        <tr>
+          <td>FOV</td>
+          <td><input type="range" id="fov" value="10" min="1" max="20"></td>
+        </tr>
+      </table>
+      <hr>
+      <p id="kills">
+        ---------- DAMAGE ----------
+      </p>
+    </div>
+    <div class="game">
+      <canvas width="800" height="800" id="display"></canvas>
+      <p id="time"></p>
+      <p id="count">titans: 10/10</p>
+      <hr>
+      <p>
+        CHANGELOG<br>
+        07.09.2022<br>
+        - Input bindings<br>
+        - Static non-random map<br>
+        - FOV change<br>
+        NOTE: Some browser hotkeys such as CTRL+W still work. I hope I didn't break anything
+      </p>
+    </div>
+    <div class="score">
+      SCOREBOARD
+      <table>
+        <tr>
+          <th>RANK</th>
+          <th>NAME</th>
+          <th>TIME</th>
+          <th>VIDEO</th>
+        </tr>
+        <tr>
+          <td>1.</td>
+          <td>Acros</td>
+          <td>19.56</td>
+          <td><a href="https://www.youtube.com/watch?v=cbOxzubBS04">YouTube</a></td>
+        </tr>
+      </table>
+      <br>
+      <a href="https://forms.gle/x1h5qHZiuaNj99AY8">SUBMIT</a>
+    </div>
+  </body>
+</html>

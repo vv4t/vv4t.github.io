@@ -1,0 +1,79 @@
+@import url(https://fonts.googleapis.com/css?family=Exo+2:300,300italic,200,200italic,400,400italic,500,500italic,600,600italic,700,700italic,900);
+
+body {
+	font-family: "Exo 2", sans-serif;
+}
+
+.home-nav {
+	margin: 0;
+	
+	top: 0%;
+	padding-left: 1%;
+	position: absolute;
+}
+
+.home-nav > img {
+  display: inline-block;
+  
+  width: 7%;
+  height: 7%;
+  
+  padding: 0;
+  margin: 0;
+  
+  vertical-align: middle;
+}
+
+.home-nav > nav {
+  display: inline-block;
+  margin-left: 3%;
+}
+
+.home-nav > nav > a {
+  position: relative;
+  
+  padding: 10px;
+  
+  font-size: 14pt;
+  font-weight: 200;
+  
+  text-decoration: none;
+  color: #ffffff;
+  letter-spacing: 0.1em;
+  display: inline-block;
+  
+  top: 0;
+  
+  transition: top 0.5s, color 0.5s;
+}
+  
+.home-nav > nav > a:hover {
+  top: 15px;
+  color: #e3e3e3;
+}
+
+.contact-links {
+	position: absolute;
+	right: 0;
+	
+	padding: 1%;
+	top: 0%;
+}
+
+.contact-links > nav > a {
+  padding-left: 15pt;
+  display: inline-block;
+  font-size: 1.70em;
+  text-decoration: none;
+  color: white;
+  
+  line-height: 1.8em;
+  
+  transition: font-size 0.5s, color 0.5s;
+}
+		
+.contact-links > nav > a:hover {
+  font-size: 2.0em;
+  color: #e3e3e3;
+}
+

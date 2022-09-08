@@ -1,0 +1,25 @@
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="style.css"></link>
+  </head>
+  <body>
+    <canvas width="640" height="640" id="canvas"></canvas>
+    <br>
+    <br>
+    <select name="brush" id="brush">
+      <option value="burst">burst</option>
+      <option value="wall">wall</option>
+      <option value="eraser">eraser</option>
+    </select>
+    <br>
+    <label>ε</label><input type="range" id="cell_e" min="10" max="500">
+    <label>μ</label><input type="range" id="cell_u" min="10" max="500">
+    <label>σ</label><input type="range" id="cell_o" min="10" max="500">
+    <br>
+    <label>R</label><input type="range" id="R_size" min="1" max="10">
+    <label>H</label><input type="range" id="H_size" min="500" max="2000">
+    <label>Hs^-1</label><input type="range" id="H_rate" min="100" max="1000">
+    <script type="module" src="yee.js"></script>
+  </body>
+</html>

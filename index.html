@@ -1,0 +1,29 @@
+<html>
+	<head>
+		<title>HOME - UOKKU Games</title>
+		<link rel="shortcut icon" type="image/png" href="assets/favicon.png"/>
+		<link rel="stylesheet" href="css/index.css">
+		<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.0/css/all.css" integrity="sha384-lZN37f5QGtY3VHgisS14W3ExzMWZxybE1SJSEsQp9S+oqd12jhcu+A56Ebc1zFSJ" crossorigin="anonymous">
+		<meta charset="utf-8">
+	</head>
+	<body>
+		<iframe src="nav.html"></iframe>
+    <div class="main">
+			<img class="main-logo" src="assets/logo_large.png" width="512" height="512" onclick="location.href='projects.html'"></img>
+			<img class="main-logo cyan" src="assets/logo_cyan.png" width="512" height="512" onclick="location.href='projects.html'"></img>
+			<img class="main-logo magenta" src="assets/logo_magenta.png" width="512" height="512" onclick="location.href='projects.html'"></img>
+			<canvas class="grid" id="retro_grid"></canvas>
+		</div>
+		<script src="js/grid.js"></script>
+		<script>
+			init_canvas(window.innerWidth, window.innerHeight);
+
+			render_stars();
+
+			setInterval(function() {
+				zpos = (zpos + 0.1) % 2;
+				render();
+			}, 10);
+		</script>
+	</body>
+</html>

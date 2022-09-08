@@ -1,0 +1,442 @@
+<html>
+  <head>
+    <title>NUKO - UOKKU Games</title>
+    <link rel="shortcut icon" type="image/png" href="/assets/favicon.png"/>
+    <link rel="stylesheet" href="/css/page.css">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.0/css/all.css" integrity="sha384-lZN37f5QGtY3VHgisS14W3ExzMWZxybE1SJSEsQp9S+oqd12jhcu+A56Ebc1zFSJ" crossorigin="anonymous">
+    <meta charset="utf-8">
+  </head>
+  <body>
+    <iframe src="/nav.html"></iframe>
+    <div class="main">
+      <h1>CIRNO-C</h1>
+      <div class="content">
+        <h1>ACCESS</h1>
+        <p>
+          <a href="https://github.com/vv4t/cirno-c">GITHUB</a><br>
+        </p>
+        <h1>ABOUT</h1>
+        <p>
+          CIRNO-C is an interation of a toy compiler/interpreter I have been
+          developing, starting at around the start of lockdown in late 2019.<br>
+          <br>
+          The compiler implements its own C-like language with modifications
+          for an easier implementation. An example of this is fixed size data
+          types such as <i>i32</i> or <i>i8</i> rather than <i>int</i> or
+          <i>short</i> which could vary in size based on the compiler. An
+          explicit function keyword <i>fn</i> was also used to distinguish
+          between global declarations and functions for easier parsing.<br>
+          <br>
+          Furthermore, I implemented its own instruction set and virtual
+          machine. This was to avoid the daunting task of fully learning
+          <i>x86</i> or other such CISC instruction, which usually listed
+          hundreds of different operations with their own binary format.<br>
+          <br>
+          For the virtual machine, a stack machine instruction set was devised
+          as, again, it would be easier to implement. Using a stack machine
+          meant that I could avoid having register allocation and could simply
+          dump the expressions on top of each other then apply the operation.
+        </p>
+        <h1>EXAMPLE</h1>
+        <p>
+          Sieve of Eratosthenes in CIRNO-C
+        </p>
+        <pre>
+#include "stdio.9c"
+
+fn main()
+{
+  i32 i;
+  i32 p;
+  i32 n;
+  i32 prime[32];
+  
+  n = 32;
+  
+  i = 0;
+  while (i < n) {
+    prime[i] = 1;
+    i = i + 1;
+  }
+  
+  p = 2;
+  while (p * p < n) {
+    if (prime[p] > 0) {
+      i = p * p;
+      while (i < n) {
+        prime[i] = 0;
+        i = i + p;
+      }
+    }
+    
+    p = p + 1;
+  }
+  
+  i = 0;
+  while (i < n) {
+    if (prime[i] > 0)
+      print(i);
+    i = i + 1;
+  }
+}
+
+main();</pre>
+        <p>Output</p>
+        <pre>
+sanakan@netsphere:~/g/tmp/cirno-c$ ./9c tests/prime.9c 
+0
+1
+2
+3
+5
+7
+11
+13
+17
+19
+23
+29
+31</pre>
+        <p>Byte Code</p>
+<pre>000 call 205
+002 int 0
+004 enter 4
+006 lbp
+007 push 0
+009 add
+010 str
+011 lbp
+012 ldr
+013 int 2
+015 leave
+016 ret
+017 enter 4
+019 lbp
+020 push 0
+022 add
+023 str
+024 lbp
+025 push 0
+027 add
+028 ldr
+029 call 4
+031 push 0
+033 call 4
+035 leave
+036 ret
+037 enter 16
+039 lbp
+040 push 0
+042 add
+043 str
+044 push 0
+046 lbp
+047 push 12
+049 add
+050 str
+051 push 48
+053 lbp
+054 push 0
+056 add
+057 ldr
+058 push 10000
+060 mod
+061 push 1000
+063 div
+064 add
+065 sx32_8
+066 lbp
+067 push 4
+069 add
+070 str8
+071 push 48
+073 lbp
+074 push 0
+076 add
+077 ldr
+078 push 1000
+080 mod
+081 push 100
+083 div
+084 add
+085 sx32_8
+086 lbp
+087 push 5
+089 add
+090 str8
+091 push 48
+093 lbp
+094 push 0
+096 add
+097 ldr
+098 push 100
+100 mod
+101 push 10
+103 div
+104 add
+105 sx32_8
+106 lbp
+107 push 6
+109 add
+110 str8
+111 push 48
+113 lbp
+114 push 0
+116 add
+117 ldr
+118 push 10
+120 mod
+121 add
+122 sx32_8
+123 lbp
+124 push 7
+126 add
+127 str8
+128 push 10
+130 sx32_8
+131 lbp
+132 push 8
+134 add
+135 str8
+136 push 0
+138 sx32_8
+139 lbp
+140 push 9
+142 add
+143 str8
+144 lbp
+145 push 4
+147 lbp
+148 push 12
+150 add
+151 ldr
+152 push 1
+154 mul
+155 add
+156 add
+157 ldr8
+158 push 48
+160 cmp
+161 jne 188
+163 lbp
+164 push 12
+166 add
+167 ldr
+168 push 3
+170 cmp
+171 jge 188
+173 lbp
+174 push 12
+176 add
+177 ldr
+178 push 1
+180 add
+181 lbp
+182 push 12
+184 add
+185 str
+186 jmp 144
+188 lbp
+189 push 4
+191 lbp
+192 push 12
+194 add
+195 ldr
+196 push 1
+198 mul
+199 add
+200 add
+201 call 4
+203 leave
+204 ret
+205 enter 140
+207 push 32
+209 lbp
+210 push 8
+212 add
+213 str
+214 push 0
+216 lbp
+217 push 0
+219 add
+220 str
+221 lbp
+222 push 0
+224 add
+225 ldr
+226 lbp
+227 push 8
+229 add
+230 ldr
+231 cmp
+232 jge 265
+234 push 1
+236 lbp
+237 push 12
+239 lbp
+240 push 0
+242 add
+243 ldr
+244 push 4
+246 mul
+247 add
+248 add
+249 str
+250 lbp
+251 push 0
+253 add
+254 ldr
+255 push 1
+257 add
+258 lbp
+259 push 0
+261 add
+262 str
+263 jmp 221
+265 push 2
+267 lbp
+268 push 4
+270 add
+271 str
+272 lbp
+273 push 4
+275 add
+276 ldr
+277 lbp
+278 push 4
+280 add
+281 ldr
+282 mul
+283 lbp
+284 push 8
+286 add
+287 ldr
+288 cmp
+289 jge 390
+291 lbp
+292 push 12
+294 lbp
+295 push 4
+297 add
+298 ldr
+299 push 4
+301 mul
+302 add
+303 add
+304 ldr
+305 push 0
+307 cmp
+308 jle 375
+310 lbp
+311 push 4
+313 add
+314 ldr
+315 lbp
+316 push 4
+318 add
+319 ldr
+320 mul
+321 lbp
+322 push 0
+324 add
+325 str
+326 lbp
+327 push 0
+329 add
+330 ldr
+331 lbp
+332 push 8
+334 add
+335 ldr
+336 cmp
+337 jge 373
+339 push 0
+341 lbp
+342 push 12
+344 lbp
+345 push 0
+347 add
+348 ldr
+349 push 4
+351 mul
+352 add
+353 add
+354 str
+355 lbp
+356 push 0
+358 add
+359 ldr
+360 lbp
+361 push 4
+363 add
+364 ldr
+365 add
+366 lbp
+367 push 0
+369 add
+370 str
+371 jmp 326
+373 jmp 375
+375 lbp
+376 push 4
+378 add
+379 ldr
+380 push 1
+382 add
+383 lbp
+384 push 4
+386 add
+387 str
+388 jmp 272
+390 push 0
+392 lbp
+393 push 0
+395 add
+396 str
+397 lbp
+398 push 0
+400 add
+401 ldr
+402 lbp
+403 push 8
+405 add
+406 ldr
+407 cmp
+408 jge 453
+410 lbp
+411 push 12
+413 lbp
+414 push 0
+416 add
+417 ldr
+418 push 4
+420 mul
+421 add
+422 add
+423 ldr
+424 push 0
+426 cmp
+427 jle 438
+429 lbp
+430 push 0
+432 add
+433 ldr
+434 call 37
+436 jmp 438
+438 lbp
+439 push 0
+441 add
+442 ldr
+443 push 1
+445 add
+446 lbp
+447 push 0
+449 add
+450 str
+451 jmp 397
+453 leave
+454 ret</pre>
+      </div>
+    </div>
+  </body>
+</html>

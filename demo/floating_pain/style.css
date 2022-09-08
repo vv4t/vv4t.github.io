@@ -1,0 +1,47 @@
+
+body {
+  overflow-x: hidden;
+  text-align: center;
+  white-space: nowrap;
+}
+
+canvas {
+  border: 1px solid;
+}
+
+.game {
+  position: absolute:
+  left: 50%;
+}
+
+.config {
+  position: absolute;
+  width: 20%
+  top: 1%;
+  left: 1%;
+  text-align: center;
+  border: 1px solid;
+  padding: 10px;
+}
+
+.score {
+  width: 20%;
+  position: absolute;
+  top: 1%;
+  right: 1%;
+  border: 1px solid;
+  padding: 10px;
+}
+
+table {
+  width: 100%;
+}
+
+table, th, td {
+  border: 1px solid;
+}
+
+td > input {
+  text-align: center;
+  min-width: 95%;
+}
