@@ -6,9 +6,17 @@ if len(sys.argv) != 3:
 
 html_file = open(sys.argv[1], "r")
 shell_file = open(sys.argv[2], "r")
+md_file = open(sys.argv[1].replace("html", "md"), "r")
 
-output_html = shell_file.read().replace("{{{POST}}}", html_file.read())
+html_content = html_file.read()
+shell_content = shell_file.read()
+md_content = md_file.read()
 
+title = md_content.split("\n")[0].replace("# ", "")
+
+output_html = shell_content.replace("{{{POST}}}", html_content).replace("{{{TITLE}}}", title)
+
+md_file.close()
 html_file.close()
 shell_file.close()
 

@@ -1,77 +1,100 @@
-var canvas;
+const canvas = document.getElementById("retro_grid");
 
-var width;
-var height;
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
 
-var ctx;
+const ctx = canvas.getContext("2d");
+ctx.imageSmoothingEnabled = false;
 
-function init_canvas(_width, _height) {
-	canvas = document.getElementById("retro_grid");
+ctx.fillStyle = "#ffffff";
+ctx.strokeStyle = "#ffffff";
 
-	canvas.width = _width;
-	canvas.height = _height;
+var z_pos = 0.0;
 
-	width = Math.floor(canvas.width);
-	height = Math.floor(canvas.height);
+const stars = [];
 
-	ctx = canvas.getContext("2d");
-	ctx.imageSmoothingEnabled = false;
-	
-	ctx.fillStyle = "#ff00ff";
-	ctx.strokeStyle = "#ff00ff";
+for (let i = 0; i < 50; i++) {
+  stars.push({
+		x: Math.floor(Math.random() * canvas.width),
+		y: Math.floor(Math.random() * canvas.height / 2)
+  });
 }
 
-function init_canvas2(_width, _height) {
-	canvas = document.createElement("CANVAS");
+let mouse_x = 0;
+let mouse_y = 0;
 
-	canvas.width = _width;
-	canvas.height = _height;
+document.addEventListener("mousemove", function(e) {
+  mouse_x = e.clientX;
+  mouse_y = e.clientY;
+});
 
-	width = Math.floor(canvas.width);
-	height = Math.floor(canvas.height);
-
-	ctx = canvas.getContext("2d");
-	ctx.imageSmoothingEnabled = false;
-	
-	ctx.fillStyle = "#ff00ff";
-	ctx.strokeStyle = "#ff00ff";
-}
-
-var yheight = 3.0;
-var zdepth = 40;
-
-var zpos = 0.0;
-
-function render_stars() {
-	for (var i = 0; i < 50; i++) {
-		var xpixel = Math.floor(Math.random() * width);
-		var ypixel = Math.floor(Math.random() * height / 2);
-		
-		ctx.fillStyle = "#ffffff";
-		ctx.fillRect(xpixel, ypixel, 2, 2);
-		ctx.fillStyle = "#ff00ff";
-	}
+function y_height(x, y)
+{
+  const m_x = (mouse_x - canvas.scrollWidth / 2) / canvas.scrollWidth * 32;
+  const m_y = (mouse_y - canvas.scrollHeight / 2) / canvas.scrollHeight * 10;
+  
+  const p_x = x - m_x;
+  const p_y = y - (15 - m_y  + z_pos);
+  
+  const sink = -9 * Math.pow(Math.E, -1/2 * (p_x * p_x + p_y * p_y));
+  const wave = (Math.sin(0.5 * x - z_pos * 0.2) - Math.cos(0.2 * y - z_pos * 0.05));
+  
+  return wave + sink + 3;
 }
 
 function render() {
-	ctx.clearRect(0, height / 2, width, height);
+	ctx.clearRect(0, 0, canvas.width, canvas.height);
+  
+  for (const star of stars)
+    ctx.fillRect(star.x, star.y, 2, 2);
 	
-	for (var z = 0; z < zdepth / 2.0 + 2; z++) {
-		var ypixel = yheight / (z * 2.0 - zpos) * (height / 2.0) + height / 2.0;
-		
-		ctx.fillRect(0, Math.floor(ypixel), width, 1);
-	}
-	
-	for (var x = -50; x < 50; x++) {
-		var xpixel0 = (x * 2.0) / 1.0 * (height / 2.0) + width / 2.0;
-		var xpixel1 = (x * 2.0) / zdepth * (height / 2.0) + width / 2.0;
-		
-		var ypixel0 = yheight / 1.0 * (height / 2.0) + height / 2.0;
-		var ypixel1 = yheight / zdepth * (height / 2.0) + height / 2.0;
-		
-		ctx.beginPath();
-			ctx.moveTo(xpixel1, ypixel1);
-			ctx.lineTo(xpixel0, ypixel0);
-		ctx.stroke();
-	}
+  let fov = canvas.scrollHeight;
+  
+  ctx.beginPath();
+  for (let z = Math.floor(z_pos); z < z_pos + 50; z++) {
+    const THICK = Math.floor(z - z_pos) + 10;
+    for (let x = -THICK; x < THICK; x++) {
+      const y0 = y_height(x, z);
+      const y1 = y_height(x + 1, z);
+      const y2 = y_height(x + 1, z + 1);
+      
+      const z_cam = z - z_pos;
+      
+      if (z_cam < 0)
+        continue;
+      
+      const xp0 = x / z_cam * fov + canvas.width / 2;
+      const xp1 = (x + 1) / z_cam * fov + canvas.width / 2;
+      const xp2 = (x + 1) / (z_cam + 1) * fov + canvas.width / 2;
+      
+      const yp0 = y0 / z_cam * fov + canvas.height / 2;
+      const yp1 = y1 / z_cam * fov + canvas.height / 2;
+      const yp2 = y2 / (z_cam + 1) * fov + canvas.height / 2;
+      
+      // scuffed boundary
+      if (x > -THICK) {
+        if (z + 1 > z_pos + 50) {
+          ctx.moveTo(xp0, yp0);
+          ctx.lineTo(xp1, yp1);
+        } else {
+          ctx.moveTo(xp0, yp0);
+          ctx.lineTo(xp1, yp1);
+          ctx.lineTo(xp2, yp2);
+        }
+      } else {
+        ctx.moveTo(xp1, yp1);
+        ctx.lineTo(xp2, yp2);
+      }
+    }
+  }
+  ctx.stroke();
 }
+
+function animate()
+{
+  z_pos += 0.1;
+  render();
+  requestAnimationFrame(animate);
+}
+
+animate();
