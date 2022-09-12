@@ -1,18 +1,15 @@
 .main {
   text-align: center;
+  width: 60%;
 }
 
 .main > h1 {
-  font-family: "Exo 2", consolas;
-  font-weight: 200;
-  font-size: 32pt;
-  text-align: center;
+  width: 133.33%;
+  margin-left: -16.67%;
 }
 
 .main > p {
   color: white;
-  width: 60%;
-  margin-left: 20%;
   text-align: justify;
   letter-spacing: 0.1em;
   line-height: 1.5em;
@@ -21,6 +18,18 @@
   font-family: "Karla";
 }
 
+img {
+  width: 100%;
+  border: 2px solid;
+}
+
 .main > table {
   width: 100%;
 }
+
+.main > pre {
+  text-align: left;
+  padding: 2%;
+  font-family: monospace;
+  border: 1px solid;
+};

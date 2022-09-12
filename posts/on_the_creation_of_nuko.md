@@ -42,7 +42,7 @@ of it and the space behind it. This could then be represented in a binary tree
 where each node is a plane and its two children are the front and back space.
 
 A tree traversal, such as checking the player’s position, would involve
-beginning with a node, checking if the position was behind or above the node’s
+beginning with a node, checking if the position was below or above the node’s
 plane and the corresponding child node would be walked into. This was applied
 recursively until an leaf node was reached.
 
@@ -67,7 +67,7 @@ have be generated. This required an algorithm which could turn 3D geometry into
 a BSP.
 
 First, the algorithm would have to parse an _.obj_ (the mesh format I was
-using), expeorted from blender. This mesh would already be assumed to be sorted
+using), exported from blender. This mesh would already be assumed to be sorted
 into its respective objects, faces (converted into triangles) and vertices with
 each being a convex hull.
 
@@ -117,7 +117,97 @@ With this, the map could be decomposed into a binary tree of nodes. The old
 vertex data would then be unecessary for spatial computation and can be
 discarded.
 
+An object can traverse this tree with a collision detection function which is
+able to test any geometry against a plane. If the geometry is above the plane,
+traverse the node ahead and vice versa for behind. If the geometry intersects
+the plane, traverse both behind and ahead nodes.
+
 ## SPHERICAL COLLISION
+
+One of the most basic collision functions we can perform on the BSP is a
+spherical collision test.
+
+In terms of geometry, a sphere is a shape which extends uniformly from a single
+point. A sphere can be said "to have infinite faces".
+
+This is useful because it means to test a sphere against the plane, which just
+shift the plane up and test of the point is still above or below the plane.
+
+To test a sphere against the plane you would simply do:
+
+```
+STRUCT Sphere
+  Vector3 position
+  float   radius
+END STRUCT
+
+STRUCT Plane
+  Vector3 normal
+  float   distance
+END STRUCT
+
+FUNCTION CollideSphereAndPlane(Sphere sphere, Plane plane) : CollisionState
+  float distance_from_plane = sphere.position.dot(plane.position) - sphere.distance
+  
+  IF distance_from_plane + 2 * sphere.radius > 0 THEN
+    ... THE SPHERE IS ABOVE THE PLANE
+  END IF
+  
+  IF distance_from_plane < 0 THEN
+    ... THE SPHERE IS BELOW THE PLANE
+  END IF
+END FUNCTION
+```
+
+Keep in mind, if the sphere is intersecting the plane, in that it's both above
+and below the plane, the code will fall through the _above test_ and still run
+the _below test_.
+
+To integrate the entire BSP, we simply replace the plane with a node containing
+the plane itself and children nodes. In testing the  states above, we travserse
+the respective space which the sphere inhabits.
+
+```
+...
+
+ENUM BSPNodeType
+  BSP_NODE_EMPTY
+  BSP_NODE_SOLID
+END ENUM
+
+STRUCT BSPNode
+  BSPNode     above
+  BSPNode     below
+  Plane       plane
+  BSPNodeType type 
+END STRUCT
+
+FUNCTION TestSphereBSP_R(Sphere sphere, BSPNode node)
+  float distance_from_plane = sphere.position.dot(plane.position) - sphere.distance
+  
+  IF distance_from_plane + 2 * sphere.radius > 0 THEN
+    TestSphereBSP_R(sphere, plane.ahove)
+  END IF
+  
+  IF distance_from_plane < 0 THEN
+    IF node.type == BSP_NODE_SOLID THEN
+      ... THE SPHERE IS COLLIDING WITH SOMETHING!
+    END IF
+    
+    TestSphereBSP_R(sphere, plane.below)
+  END IF
+END FUNCTION
+```
+
+In visualising how it works, it can be useful to imagine encasing a sphere in
+jelly. Each node traversal is like cutting the jelly along the node's plane. If
+the sphere is in both parts of the jelly, we keep going in either. But if a cut
+of jelly no longer contains any part of the sphere, we discard it.
+
+In each traversal of the tree, we assume that parts space are culled off.
+Therefore if a node is marked as solid, we're essentially saying all space above
+it is solid. And therefore, if we pass a node that is marked solid, it is
+colliding with something.
 
 ## REFERENCES
 
