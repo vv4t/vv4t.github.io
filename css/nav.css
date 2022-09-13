@@ -7,26 +7,12 @@ body {
 
 .home-nav {
 	margin: 0;
-	
 	padding-left: 1%;
 	position: absolute;
 }
 
-.home-nav > img {
-  display: inline-block;
-  
-  width: 5%;
-  height: 5%;
-  
-  padding: 1%;
-  margin: 0;
-  
-  vertical-align: middle;
-}
-
 .home-nav > nav {
   display: inline-block;
-  margin-left: 3%;
 }
 
 .home-nav > nav > a {
@@ -42,13 +28,13 @@ body {
   letter-spacing: 0.1em;
   display: inline-block;
   
-  left: 0;
+  top: 0;
   
-  transition: left 0.5s, color 0.5s;
+  transition: top 0.5s, color 0.5s;
 }
   
 .home-nav > nav > a:hover {
-  left: 15px;
+  top: 15px;
   color: #e3e3e3;
 }
 
@@ -66,8 +52,6 @@ body {
   font-size: 1.70em;
   text-decoration: none;
   color: white;
-  
-  line-height: 1.8em;
   
   transition: font-size 0.5s, color 0.5s;
 }
