@@ -34,10 +34,13 @@ export class input_t {
         this.binds[e.keyCode]();
       
       this.keys[e.keyCode] = true;
+      e.preventDefault();
     });
     document.addEventListener("keyup", (e) => {
       this.keys[e.keyCode] = false;
+      e.preventDefault();
     });
+    
     canvas.addEventListener("mousemove", (e) => {
       if (this.is_lock) {
         this.mouse_x += e.movementX;
@@ -49,12 +52,14 @@ export class input_t {
     });
     canvas.addEventListener("mousedown", (e) => {
       this.mouse_button = true;
+      e.preventDefault();
     });
     canvas.addEventListener("mouseup", (e) => {
       this.mouse_button = false;
+      e.preventDefault();
     });
-    document.addEventListener("mousewheel", (e) => {
-      this.wheel += e.wheelDelta;
+    document.addEventListener("wheel", (e) => {
+      this.wheel += -e.deltaY;
     });
     
     canvas.requestPointerLock = canvas.requestPointerLock || canvas.mozRequestPointerLock;
