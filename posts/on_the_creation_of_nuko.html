@@ -68,20 +68,6 @@ beginning with a node, checking if the position was below or above the node’s
 plane and the corresponding child node would be walked into. This was applied
 recursively until an leaf node was reached.</p>
 
-<table>
-<thead>
-<tr>
-<th style="text-align: center"><img src="assets/on_the_creation_of_nuko/valve_bsp.gif" alt="valve_bsp" /></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td style="text-align: center">Animation demonstrating Binary Space Partitioning (Valve, BSP) [1]</td>
-</tr>
-</tbody>
-</table>
-
 <p>It suddenly clicked to me that, performing a series of plane tests on a position
 to determine if it occupied a certain space, was essentially collision.</p>
 
@@ -105,10 +91,25 @@ each being a convex hull.</p>
 
 <p>It would then take the first face of the first object and turn it into a plane
 and set it as the root node. Then, the next face would be taken and, if all the
-vertices were in front of it, it would be in front of the node.</p>
+vertices were in front of it, it would be in front of the
+node. If all the vertices were behind the plane, then the
+face will be behind the node.</p>
 
-<p>If all the vertices were behind it, it would be behind the node. Simple enough.
-But what if the face was in between the dividing plane?</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: center"><img src="assets/on_the_creation_of_nuko/valve_bsp.gif" alt="valve_bsp" /></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td style="text-align: center">Animation demonstrating Binary Space Partitioning (Valve, BSP) [1]</td>
+</tr>
+</tbody>
+</table>
+
+<p>But what if the face was in between the dividing plane?</p>
 
 <h2 id="triangle-splitting">TRIANGLE SPLITTING</h2>
 

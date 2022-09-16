@@ -46,10 +46,6 @@ beginning with a node, checking if the position was below or above the node’s
 plane and the corresponding child node would be walked into. This was applied
 recursively until an leaf node was reached.
 
-|![valve_bsp](assets/on_the_creation_of_nuko/valve_bsp.gif)|
-|:--:|
-|Animation demonstrating Binary Space Partitioning (Valve, BSP) [1]|
-
 It suddenly clicked to me that, performing a series of plane tests on a position
 to determine if it occupied a certain space, was essentially collision.
 
@@ -73,10 +69,16 @@ each being a convex hull.
 
 It would then take the first face of the first object and turn it into a plane
 and set it as the root node. Then, the next face would be taken and, if all the
-vertices were in front of it, it would be in front of the node.
+vertices were in front of it, it would be in front of the
+node. If all the vertices were behind the plane, then the
+face will be behind the node.
 
-If all the vertices were behind it, it would be behind the node. Simple enough.
-But what if the face was in between the dividing plane?
+|![valve_bsp](assets/on_the_creation_of_nuko/valve_bsp.gif)|
+|:--:|
+|Animation demonstrating Binary Space Partitioning (Valve, BSP) [1]|
+
+But what if the face was in between the dividing plane? We
+would have to split the triangles.
 
 ## TRIANGLE SPLITTING
 
