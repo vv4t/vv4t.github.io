@@ -234,8 +234,23 @@ export class scene_phys_t {
       new vec2_t(-1, -1)
     ];
     
+    this.spawn_rect();
     this.spawn_boxes();
     // this.static_constraints.push(new constraint_t(0, new vec2_t(), 10));
+  }
+  
+  spawn_rect()
+  {
+    const rect_vertices = [
+      new vec2_t(-6, +1),
+      new vec2_t(+6, +1),
+      new vec2_t(+6, -1),
+      new vec2_t(-6, -1)
+    ];
+    
+    const rect = this.add_entity();
+    this.motion[rect] = new motion_t(1.0);
+    this.shape[rect] = new shape_t(new vec2_t(0, 0), 0.0, rect_vertices);
   }
   
   spawn_boxes()
