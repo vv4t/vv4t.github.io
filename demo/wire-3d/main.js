@@ -58,7 +58,7 @@ function scene_load_obj()
 
 function y_height(x, z, t)
 {
-  const wave = (Math.sin(0.5 * x - t * 2.0) - Math.cos(0.4 * z - t * 0.5)) - 1;
+  const wave = (Math.sin(0.5 * z - t * 2.0) - Math.cos(0.4 * x - t * 0.5)) - 1;
   
   return wave;
 }
