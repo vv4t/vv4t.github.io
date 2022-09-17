@@ -30,7 +30,7 @@ let faces = [];
 
 function scene_load_obj()
 {
-  load_file("monkey.obj", function(obj_file) {
+  load_file("ship.obj", function(obj_file) {
     const obj_cmds = obj_file.split("\n");
     
     const v_list = [];

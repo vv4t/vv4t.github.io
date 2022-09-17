@@ -32,6 +32,21 @@ export class vec2_t {
       this.x * v,
       this.y * v);
   }
+  
+  rotate(theta)
+  {
+    const cos = Math.cos(theta);
+    const sin = Math.sin(theta);
+    
+    return new vec2_t(
+      this.x * cos - this.y * sin,
+      this.x * sin + this.y * cos);
+  }
+  
+  cross_up(v)
+  {
+    return new vec2_t(this.y * v, -this.x * v);
+  }
 };
 
 export class vec3_t {
