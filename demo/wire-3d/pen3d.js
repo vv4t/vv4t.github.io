@@ -7,7 +7,7 @@ export class pen3d_t {
   {
     this.camera = camera;
     this.pen = pen;
-    this.z_clip = 1.0;
+    this.z_clip = 0.1;
   }
   
   z_project(z_dist)
