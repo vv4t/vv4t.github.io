@@ -160,7 +160,7 @@ export class field_t {
     }
   }
   
-  draw(display)
+  draw_H(display)
   {
     for (let y = 0; y < this.height - BOUND; y++) {
       for (let x = 0; x < this.width - BOUND; x++) {
@@ -188,6 +188,26 @@ export class field_t {
         b = Math.min(b, 255);
         
         display.put_pixel_rgb([r, g, b], x, y);
+      }
+    }
+  }
+  
+  draw_E(pen)
+  {
+    const aspect_ratio = 2 / (this.width - 2 * BOUND);
+    const grid_size = 2;
+    
+    for (let y = 0; y < this.height - 2 * BOUND; y += grid_size) {
+      for (let x = 0; x < this.width - 2 * BOUND; x += grid_size) {
+        const screen_pos = new vec2_t(x, this.height - 2 * BOUND - y).mulf(aspect_ratio).sub(new vec2_t(1, 1));
+        const cell = this.get_cell(x, y);
+        
+        const E = cell.E.copy();
+        E.y *= -1;
+        const len_E = Math.min(E.length() * 100 * aspect_ratio, grid_size / 2 * aspect_ratio);
+        const screen_E = E.normalize().mulf(len_E);
+        
+        pen.line(screen_pos, screen_pos.add(screen_E));
       }
     }
   }

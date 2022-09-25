@@ -3,6 +3,7 @@
 import { field_t } from "./field.js";
 import { vec2_t } from "./math.js";
 import { display_t } from "./display.js";
+import { pen_t } from "../wire-3d/pen.js";
 
 const TIMESTEP = 0.015;
 
@@ -17,6 +18,9 @@ function main()
   const canvas = document.getElementById("canvas");
   const ctx = canvas.getContext("2d");
   ctx.imageSmoothingEnabled = false;
+  
+  const pen = new pen_t(canvas);
+  ctx.strokeStyle = "#ffffff";
   
   let mouse_down = false;
   let cell_x = 0;
@@ -68,10 +72,17 @@ function main()
     }
     
     field.update(TIMESTEP);
-    field.draw(display);
     
+    field.draw_H(display);
     display.swap();
     ctx.drawImage(display.canvas, 0, 0, 640, 640);
+    
+    
+    // pen.clear();
+    pen.begin();
+    field.draw_E(pen);
+    pen.stroke();
+    
     
     time += TIMESTEP;
   }, TIMESTEP * 1000);

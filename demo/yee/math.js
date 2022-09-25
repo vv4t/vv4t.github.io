@@ -12,6 +12,16 @@ export class vec2_t {
     this.y = y;
   }
   
+  normalize()
+  {
+    const d = this.length();
+    
+    if (d > 0)
+      return this.mulf(1.0 / d);
+    else
+      return new vec2_t(0.0, 0.0);
+  }
+  
   copy()
   {
     return new vec2_t(this.x, this.y);
