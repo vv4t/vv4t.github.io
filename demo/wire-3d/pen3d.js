@@ -3,10 +3,11 @@
 import { vec2_t } from "./math.js";
 
 export class pen3d_t {
-  constructor(pen, camera)
+  constructor(pen, camera, aspect_ratio = 1.0)
   {
     this.camera = camera;
     this.pen = pen;
+    this.aspect_ratio = aspect_ratio;
     this.z_clip = 0.1;
   }
   
@@ -20,7 +21,7 @@ export class pen3d_t {
     const z_project = this.z_project(pos.z);
     
     return new vec2_t(
-      pos.x * z_project,
+      pos.x * z_project * this.aspect_ratio,
       pos.y * z_project
     );
   }

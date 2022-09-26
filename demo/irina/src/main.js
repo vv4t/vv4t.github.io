@@ -26,7 +26,6 @@ function main()
 
   setInterval(function() {
     car.reset_forces();
-    car.drag();
     
     if (input.get_key("W"))
       car.accel(50);

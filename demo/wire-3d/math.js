@@ -12,6 +12,11 @@ export class vec2_t {
     this.y = y;
   }
   
+  dot(v)
+  {
+    return this.x * v.x + this.y * v.y;
+  }
+  
   add(v)
   {
     return new vec2_t(
@@ -46,6 +51,11 @@ export class vec2_t {
   cross_up(v)
   {
     return new vec2_t(this.y * v, -this.x * v);
+  }
+  
+  copy()
+  {
+    return new vec2_t(this.x, this.y);
   }
 };
 
@@ -130,5 +140,25 @@ export class vec3_t {
       this.x * cos - this.y * sin,
       this.x * sin + this.y * cos,
       this.z);
+  }
+  
+  dot(v)
+  {
+    return this.x * v.x + this.y * v.y + this.z * v.z;
+  }
+  
+  length()
+  {
+    return Math.sqrt(this.dot(this));
+  }
+  
+  normalize()
+  {
+    return this.mulf(1 / this.length());
+  }
+  
+  copy()
+  {
+    return new vec3_t(this.x, this.y, this.z);
   }
 };
