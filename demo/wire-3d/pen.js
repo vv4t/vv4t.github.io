@@ -46,4 +46,9 @@ export class pen_t {
   {
     this.ctx.stroke();
   }
+  
+  color(stroke_col)
+  {
+    this.ctx.strokeStyle = stroke_col;
+  }
 };

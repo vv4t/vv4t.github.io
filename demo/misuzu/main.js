@@ -140,8 +140,6 @@ function clip_capsule_plane(capsule, plane)
 
 function clip_capsule_hull(capsule, hull)
 {
-  // TODO: bevel planes or something other algo
-  
   let max_clip_dist = -1000;
   let max_clip_normal;
   
@@ -207,14 +205,87 @@ function draw_model(model)
     draw_mesh(mesh);
 }
 
+class hook_t {
+  constructor()
+  {
+    this.pos = new vec3_t();
+    this.vel = new vec3_t();
+    this.capsule = new capsule_t(this.pos, 0.1, 0.0);
+    this.length = 0.0;
+    this.active = false;
+    this.anchor = false;
+  }
+  
+  shoot(origin, dir)
+  {
+    this.pos = origin.copy();
+    this.vel = dir.normalize().mulf(250);
+    this.active = true;
+    this.anchor = false;
+    this.length = 0;
+  }
+  
+  update(map)
+  {
+    if (!this.active || this.anchor)
+      return;
+    
+    this.pos = this.pos.add(this.vel.mulf(C_TIMESTEP));
+    this.capsule.pos = this.pos.copy();
+    this.length += this.vel.length() * C_TIMESTEP;
+    
+    const clips = clip_capsule_map(this.capsule, map);
+    
+    if (clips.length > 0) {
+      this.vel = new vec3_t();
+      this.anchor = true;
+    }
+    
+    if (this.length > 100)
+      this.release();
+  }
+  
+  release()
+  {
+    this.active = false;
+    this.anchor = false;
+  }
+};
+
 class player_t {
   constructor()
   {
     this.pos = new vec3_t(0, 1.5, 0);
     this.vel = new vec3_t();
+    this.hook_1 = new hook_t();
+    this.hook_2 = new hook_t();
     this.next_jump = time;
     this.on_ground = false;
     this.capsule = new capsule_t(this.pos, 0.5, 1.3);
+    
+    this.is_gas = false;
+    this.is_reel_out = false;
+    this.is_reel_in = false;
+    this.is_forward = false;
+    this.is_left = false;
+    this.is_back = false;
+    this.is_right = false;
+    this.is_hook_1 = false;
+    this.is_hook_2 = false;
+    
+    input.bind(key.code("W"), () => this.is_forward = true, () => this.is_forward = false);
+    input.bind(key.code("A"), () => this.is_left = true, () => this.is_left = false);
+    input.bind(key.code("S"), () => this.is_back = true, () => this.is_back = false);
+    input.bind(key.code("D"), () => this.is_right = true, () => this.is_right = false);
+    
+    input.bind(key.code("Q"), () => this.is_hook_2 = true, () => this.is_hook_2 = false);
+    input.bind(key.code("E"), () => this.is_hook_1 = true, () => this.is_hook_1 = false);
+    
+    input.bind(key.ALT, () => this.is_reel_out = true, () => this.is_reel_out = false);
+    input.bind(key.SHIFT, () => this.is_gas = true, () => this.is_gas = false);
+    input.bind(key.code(" "), () => this.is_reel_in = true, () => this.is_reel_in = false);
+    
+    input.bind(key.WHEEL_DOWN, () => this.reel_in());
   }
   
   apply_gravity()
@@ -284,21 +355,74 @@ class player_t {
     this.vel = this.vel.add(wish_dir.mulf(accel_speed));
   }
   
-  walk_move()
+  gas(wish_dir)
+  {
+    const f_move = wish_dir.mulf(10);
+    const f_accel = this.vel.normalize();
+    const accel_dir = f_accel.add(f_move);
+    
+    this.vel = this.vel.add(accel_dir.mulf(C_TIMESTEP));
+  }
+  
+  manuver()
+  {
+    const wish_dir = this.get_wish_dir();
+    
+    const look_dir = new vec3_t(0, 0, 1).rotate_zxy(camera.rot);
+    
+    if (this.is_hook_2) {
+      if (!this.hook_2.active)
+        this.hook_2.shoot(this.pos, look_dir);
+    } else {
+      if (this.hook_2.anchor)
+        this.hook_2.release();
+    }
+    
+    if (this.is_hook_1) {
+      if (!this.hook_1.active)
+        this.hook_1.shoot(this.pos, look_dir);
+    } else {
+      if (this.hook_1.anchor)
+        this.hook_1.release();
+    }
+    
+    if (this.on_ground) {
+      this.accelerate(wish_dir, 6.5, 9.0);
+      
+      if (this.is_gas && time > this.next_jump) {
+        this.vel.y += 600 * C_TIMESTEP;
+        this.next_jump = time + 0.1;
+      } else {
+        this.apply_friction();
+      }
+    } else {
+      if (this.is_gas)
+        this.gas(wish_dir);
+    }
+    
+    if (this.is_reel_in)
+      this.reel_in();
+  }
+  
+  get_wish_dir()
   {
     const SPD = 3 * 0.015;
     const cmd_dir = new vec3_t();
-    if (input.get_key(key.code("W")))
+    if (this.is_forward)
       cmd_dir.z++;
-    if (input.get_key(key.code("A")))
+    if (this.is_left)
       cmd_dir.x--;
-    if (input.get_key(key.code("S")))
+    if (this.is_back)
       cmd_dir.z--;
-    if (input.get_key(key.code("D")))
+    if (this.is_right)
       cmd_dir.x++;
     
-    const wish_dir = cmd_dir.rotate_zyx(camera.rot);
-    wish_dir.y = 0;
+    return cmd_dir.rotate_y(camera.rot.y);
+  }
+  
+  walk_move()
+  {
+    const wish_dir = this.get_wish_dir();
     
     if (this.on_ground) {
       this.accelerate(wish_dir, 6.5, 9.0);
@@ -314,15 +438,111 @@ class player_t {
     }
   }
   
+  is_perp(hook)
+  {
+    if (hook.anchor) {
+      const dist_pos = this.pos.dot(this.vel);
+      const hook_pos = hook.pos.dot(this.vel);
+      
+      return dist_pos > hook_pos;
+    }
+    
+    return false;
+  }
+  
+  reel_in()
+  {
+    let f_reel = new vec3_t();
+    
+    if (this.is_perp(this.hook_1)) {
+      const hook_dir = this.pos.sub(this.hook_1.pos).normalize();
+      const lambda = -60 * Math.PI / 180 * this.vel.length();
+      
+      const a = this.vel.mulf(-0.6);
+      const b = hook_dir.mulf(lambda);
+      const c = a.add(b);
+      
+      f_reel = f_reel.add(c);
+    }
+    
+    if (this.is_perp(this.hook_2)) {
+      const hook_dir = this.pos.sub(this.hook_2.pos).normalize();
+      const lambda = -60 * Math.PI / 180 * this.vel.length();
+      
+      const a = this.vel.mulf(-0.6);
+      const b = hook_dir.mulf(lambda);
+      const c = a.add(b);
+      
+      f_reel = f_reel.add(c);
+    }
+    
+    this.vel = this.vel.add(f_reel);
+  }
+  
+  hook_constrain()
+  {
+    let f_hook = new vec3_t();
+    let f_pull = new vec3_t();
+    
+    if (this.hook_1.anchor) {
+      const hook_dir = this.pos.sub(this.hook_1.pos);
+      
+      if (this.is_perp(this.hook_1)) {
+        if (this.is_gas) {
+          if (!this.is_reel_out) {
+            const theta = this.vel.length() * C_TIMESTEP / hook_dir.length();
+            const up_axis = hook_dir.mulf(-1).cross(this.vel).normalize();
+            const perp_dir = hook_dir.cross(up_axis).normalize();
+            f_hook = f_hook.add(perp_dir);
+          }
+        } else {
+          this.vel = this.vel.mulf(0.97);
+        }
+      }
+      
+      f_pull = f_pull.add(hook_dir.mulf(-0.7 * C_TIMESTEP));
+    }
+    
+    if (this.hook_2.anchor) {
+      const hook_dir = this.pos.sub(this.hook_2.pos);
+      
+      if (this.is_perp(this.hook_2)) {
+        if (this.is_gas) {
+          if (!this.is_reel_out) {
+            const theta = this.vel.length() * C_TIMESTEP / hook_dir.length();
+            const up_axis = hook_dir.mulf(-1).cross(this.vel).normalize();
+            const perp_dir = hook_dir.cross(up_axis).normalize();
+            f_hook = f_hook.add(perp_dir);
+          }
+        } else {
+          this.vel = this.vel.mulf(0.97);
+        }
+      }
+      
+      f_pull = f_pull.add(hook_dir.mulf(-0.7 * C_TIMESTEP));
+    }
+    
+    if (f_hook.length() > 0)
+      f_hook = f_hook.normalize().mulf(this.vel.length()).sub(this.vel);
+    
+    const f_net = f_hook.add(f_pull);
+    
+    this.vel = this.vel.add(f_net);
+  }
+  
   update(map)
   {
     this.capsule.pos = this.pos.copy();
     
     this.apply_gravity();
-    this.walk_move();
+    this.manuver();
+    this.hook_constrain();
     this.integrate_capsule();
     this.clip_map(map);
     this.integrate();
+    
+    this.hook_1.update(map);
+    this.hook_2.update(map);
   }
 };
 
@@ -355,9 +575,34 @@ class player_t {
     camera.pos = player.pos.copy();
     
     pen.clear();
+    
     pen.begin();
+    pen.color("black");
+    
     draw_model(map_model);
     pen3d.circle(spawn_point, 0.5);
+    
+    pen.stroke();
+    
+    pen.begin();
+    pen.color("red");
+    
+    if (player.hook_1.active) {
+      pen3d.circle(player.hook_1.pos, player.hook_1.capsule.radius);
+      pen3d.line(player.pos.add(new vec3_t(0, 0, 0.1).rotate_zyx(camera.rot)).add(new vec3_t(0, -0.5, 0)), player.hook_1.pos);
+    }
+    
+    if (player.hook_2.active) {
+      pen3d.circle(player.hook_2.pos, player.hook_2.capsule.radius);
+      pen3d.line(player.pos.add(new vec3_t(0, 0, 0.1).rotate_zyx(camera.rot)).add(new vec3_t(0, -0.5, 0)), player.hook_2.pos);
+    }
+    
+    pen.stroke();
+    
+    pen.begin();
+    pen.color("green");
+    pen.line(new vec2_t(0, -0.01), new vec2_t(0, 0.01));
+    pen.line(new vec2_t(-0.01, 0), new vec2_t(0.01, 0));
     pen.stroke();
   }
 

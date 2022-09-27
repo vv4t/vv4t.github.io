@@ -40,7 +40,7 @@ export class pen3d_t {
   {
     const cam_pos_a = this.camera.space(pos_a);
     const cam_pos_b = this.camera.space(pos_b);
-      
+    
     if (cam_pos_a.z < this.z_clip && cam_pos_b.z < this.z_clip) {
       return;
     } else if (cam_pos_a.z < this.z_clip) {
