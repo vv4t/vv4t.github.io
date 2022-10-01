@@ -13,7 +13,7 @@ export class pen_t {
   screen_space(pos)
   {
     return new vec2_t(
-      (pos.x + 1) * this.canvas.height / 2.0,
+      pos.x * this.canvas.height / 2.0 + this.canvas.width / 2.0,
       (-pos.y + 1) * this.canvas.height / 2.0);
   }
   

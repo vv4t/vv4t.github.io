@@ -10,16 +10,16 @@ const canvas = document.getElementById("canvas");
 const pen = new pen_t(canvas);
 const input = new input_t(canvas);
 
-const C_t = 1000;
+const C_t = 10000;
 const C_drag = 0.5;
 const C_rr = C_drag * 30;
 
-let  x_g = 2.66;
-const x_d = 3.42;
+let x_g = 2.66;
+const x_d = 9.42;
 const n = 0.7;
 const W_r = 0.34;
 const W_m = 75;
-const M = 700;
+const M = 1500;
 
 const elem_throttle = document.getElementById("throttle");
 const elem_torque = document.getElementById("torque");
@@ -54,7 +54,10 @@ let prev_accel = 0;
 
 function torque_rpm_curve(rpm)
 {
-  return -0.00005 * (rpm - 3500) * (rpm - 3500) + 400;
+  const x = rpm - 2000;
+  
+  return -0.00005 * x*x + 350;
+  // return -0.000015 * (rpm - 3500) * (rpm - 3500) + 230;
 }
 
 function update()
@@ -109,52 +112,45 @@ function update()
   if (input.get_key(key.code("X")))
     T_brake = -100;
   
-  const rpm = Math.max(Math.min(wheel_ang_vel * x_g * x_d * 60 / (2 * Math.PI), 6000), 1000);
+  const rpm = Math.max(wheel_ang_vel * x_g * x_d * 60 / (2 * Math.PI), 1000);
   
   const T_max = torque_rpm_curve(rpm);
   const T_engine = throttle * T_max;
   
-  const W_rear = 0.5 * 3.0 * M - M * prev_accel;
-  const W_front = 0.5 * 3.0 * M + M * prev_accel;
+  const W_rear = 0.5 * 9.0 * M - M * prev_accel;
+  const W_front = 0.5 * 9.0 * M + M * prev_accel;
   
   const mu = 1.0;
   const F_max = mu * W_rear;
   const F_max_2 = mu * W_front;
   
-  const slip_ratio = Math.min(Math.max((wheel_ang_vel * W_r - car_vel) / Math.abs(car_vel), -10), 10);
-  const slip_ratio_2 = Math.min(Math.max((wheel_ang_vel_2 * W_r - car_vel) / Math.abs(car_vel), -10), 10);
+  const abs_car_vel = Math.abs(car_vel);
+    
+  const slip_ratio = (wheel_ang_vel * W_r - car_vel) / Math.max(abs_car_vel, 5);
+  const slip_ratio_2 = (wheel_ang_vel_2 * W_r - car_vel) / Math.max(abs_car_vel, 5);
   
-  let F_traction = C_t * slip_ratio;
-  if (F_traction < -F_max)
-    F_traction = -F_max;
-  if (F_traction > F_max)
-    F_traction = F_max;
-  
-  let F_traction_2 = C_t * slip_ratio_2;
-  if (F_traction_2 < -F_max_2)
-    F_traction_2 = -F_max_2;
-  if (F_traction_2 > F_max_2)
-    F_traction_2 = F_max_2;
+  const F_traction = clamp(C_t * slip_ratio, -F_max, F_max);
+  const F_traction_2 = clamp(C_t * slip_ratio_2, -F_max_2, F_max_2);
   
   const T_drive = T_engine * x_g * x_d * n;
   const T_traction = F_traction * W_r;
-  const T_total = T_drive - T_traction + T_brake;
+  const T_total = T_drive - clamp(T_traction, -T_drive, T_drive) + T_brake;
   const I_wheel = W_m * W_r * W_r / 2;
+  
+  const T_traction_2 = F_traction_2 * W_r;
+  const T_total_2 = -T_traction_2;
+  
+  const F_rr = -C_rr * Math.abs(car_vel);
+  const F_drag = -C_drag * car_vel * car_vel;
+  const F_total = F_traction + F_traction_2 + F_rr + F_drag;
   
   const ang_accel = T_total / I_wheel;
   wheel_ang_vel += ang_accel * TIMESTEP;
   wheel_ang += wheel_ang_vel * TIMESTEP;
   
-  const T_traction_2 = F_traction_2 * W_r;
-  const T_total_2 = -T_traction_2;
-  
   const ang_accel_2 = T_total_2 / I_wheel;
   wheel_ang_vel_2 += ang_accel_2 * TIMESTEP;
   wheel_ang_2 += wheel_ang_vel_2 * TIMESTEP;
-  
-  const F_rr = -C_rr * Math.abs(car_vel);
-  const F_drag = -C_drag * car_vel * car_vel;
-  const F_total = F_traction + F_traction_2 + F_rr + F_drag;
   
   const accel = F_total / M;
   car_vel += accel * TIMESTEP;
@@ -203,7 +199,7 @@ function update()
   
   elem_throttle.innerHTML = float_str(throttle);
   elem_velocity.innerHTML = float_str(car_vel * 3.6);
-  elem_rpm.innerHTML = float_str(rpm);
+  elem_rpm.innerHTML = float_str(rpm);//float_str(wheel_ang_vel * 60 / (2 * Math.PI));
   elem_torque.innerHTML = float_str(T_engine);
   elem_slip_ratio.innerHTML = float_str(slip_ratio);
   elem_gear_ratio.innerHTML = float_str(x_g);
@@ -223,5 +219,6 @@ function format_time(elapsed_time)
   return minutes.toString().padStart(2, "0") + ":" + seconds.toString().padStart(2, "0") + ":" + miliseconds.toString().padStart(2, "0");
 }
 setInterval(function() {
+  for (let i = 0; i < 1; i++)
   update();
 }, TIMESTEP * 1000);
