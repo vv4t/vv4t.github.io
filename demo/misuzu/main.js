@@ -15,7 +15,7 @@ const C_FRICTION = 4.0;
 const canvas = document.getElementById("canvas");
 const camera = new camera_t(new vec3_t(), new vec3_t());
 const pen = new pen_t(canvas);
-const pen3d = new pen3d_t(pen, camera, canvas.height / canvas.width);
+const pen3d = new pen3d_t(pen, camera, 1.3 * canvas.height / canvas.width);
 const input = new input_t(canvas);
 
 let time = 0;
@@ -452,29 +452,21 @@ class player_t {
   
   reel_in()
   {
-    let f_reel = new vec3_t();
+    let hook_dir = new vec3_t();
     
-    if (this.is_perp(this.hook_1)) {
-      const hook_dir = this.pos.sub(this.hook_1.pos).normalize();
-      const lambda = -60 * Math.PI / 180 * this.vel.length();
-      
-      const a = this.vel.mulf(-0.6);
-      const b = hook_dir.mulf(lambda);
-      const c = a.add(b);
-      
-      f_reel = f_reel.add(c);
-    }
+    if (this.is_perp(this.hook_1))
+      hook_dir = this.pos.sub(this.hook_1.pos);
     
-    if (this.is_perp(this.hook_2)) {
-      const hook_dir = this.pos.sub(this.hook_2.pos).normalize();
-      const lambda = -60 * Math.PI / 180 * this.vel.length();
-      
-      const a = this.vel.mulf(-0.6);
-      const b = hook_dir.mulf(lambda);
-      const c = a.add(b);
-      
-      f_reel = f_reel.add(c);
-    }
+    if (this.is_perp(this.hook_2))
+      hook_dir = hook_dir.add(this.pos.sub(this.hook_2.pos));
+    
+    if (hook_dir.dot(hook_dir) < 0.01)
+      return;
+    
+    const lambda = -60 * Math.PI / 180 * this.vel.length();
+    const a = this.vel.mulf(-0.6);
+    const b = hook_dir.normalize().mulf(lambda);
+    const f_reel = a.add(b);
     
     this.vel = this.vel.add(f_reel);
   }
@@ -500,7 +492,8 @@ class player_t {
         }
       }
       
-      f_pull = f_pull.add(hook_dir.mulf(-0.7 * C_TIMESTEP));
+      if (!this.is_reel_out)
+        f_pull = f_pull.add(hook_dir.mulf(-0.7 * C_TIMESTEP));
     }
     
     if (this.hook_2.anchor) {
@@ -519,7 +512,8 @@ class player_t {
         }
       }
       
-      f_pull = f_pull.add(hook_dir.mulf(-0.7 * C_TIMESTEP));
+      if (!this.is_reel_out)
+        f_pull = f_pull.add(hook_dir.mulf(-0.7 * C_TIMESTEP));
     }
     
     if (f_hook.length() > 0)

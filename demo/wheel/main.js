@@ -57,7 +57,6 @@ function torque_rpm_curve(rpm)
   const x = rpm - 2000;
   
   return -0.00005 * x*x + 350;
-  // return -0.000015 * (rpm - 3500) * (rpm - 3500) + 230;
 }
 
 function update()
