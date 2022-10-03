@@ -56,7 +56,7 @@ function torque_rpm_curve(rpm)
 {
   const x = rpm - 2000;
   
-  return -0.00005 * x*x + 350;
+  return -0.000025 * x*x + 350;
 }
 
 function update()
@@ -132,8 +132,10 @@ function update()
   const F_traction_2 = clamp(C_t * slip_ratio_2, -F_max_2, F_max_2);
   
   const T_drive = T_engine * x_g * x_d * n;
-  const T_traction = F_traction * W_r;
-  const T_total = T_drive - clamp(T_traction, -T_drive, T_drive) + T_brake;
+  let T_traction = F_traction * W_r;
+  if (abs_car_vel < 10)
+    T_traction = clamp(T_traction, -T_drive, T_drive);
+  const T_total = T_drive - T_traction + T_brake;
   const I_wheel = W_m * W_r * W_r / 2;
   
   const T_traction_2 = F_traction_2 * W_r;
