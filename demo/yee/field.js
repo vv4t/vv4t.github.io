@@ -67,6 +67,24 @@ export class field_t {
     this.update_E(delta_time);
   }
   
+  emit_move(x_o, y_o, d_x, d_y, charge)
+  {
+    const R = 2;
+    
+    for (let y = -R; y <= R; y++) { 
+      for (let x = -R; x <= R; x++) {
+        const xp = x_o + x;
+        const yp = y_o + y;
+        
+        const cell = this.get_cell(xp, yp);
+        
+        const dE = new vec2_t(d_x / (x * x + 0.5), d_y / (y * y + 0.5));
+        
+        cell.E = cell.E.add(dE.mulf(charge));
+      }
+    }
+  }
+  
   emit_H(x, y, R, charge)
   {
     for (let yp = y - R; yp <= y + R; yp++) {
@@ -178,6 +196,11 @@ export class field_t {
         
         if (this.get_cell(x, y).H > 0) {
           const H_col = HSVtoRGB(0.3 + 0.1 / H_value, 0.2 / H_value, H_value);
+          r += H_col[0];
+          g += H_col[1];
+          b += H_col[2];
+        } else {
+          const H_col = HSVtoRGB(0.7 + 0.1 / H_value, 0.2 / H_value, H_value);
           r += H_col[0];
           g += H_col[1];
           b += H_col[2];

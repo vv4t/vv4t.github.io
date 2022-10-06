@@ -71,12 +71,42 @@ function main()
       }
     }
     
+    /*
+    const theta = 4 * time;
+    
+    {
+      const y_pos = 30 + Math.cos(theta) * 10;
+      const d_y_pos = -Math.sin(theta) * 10;
+      
+      field.emit_move(50, Math.floor(y_pos), 0, -d_y_pos * TIMESTEP, 0.1);
+    }
+    {
+      const y_pos = 30 - Math.cos(theta) * 10;
+      const d_y_pos = +Math.sin(theta) * 10;
+      
+      field.emit_move(50, Math.floor(y_pos), 0, -d_y_pos * TIMESTEP, -0.1);
+    }*/
+    /*
+    {
+      const period = Math.cos(0.5 * time) * 5;
+      for (let i = 0; i < 5; i++) {
+        const theta = period * time + i * 2 * Math.PI / 5;
+        
+        const x_pos = 50 + Math.cos(theta) * 30;
+        const y_pos = 50 + Math.sin(theta) * 30;
+        
+        const d_x_pos = Math.sin(theta) * period * 30 * TIMESTEP;
+        const d_y_pos = -Math.cos(theta) * period * 30 * TIMESTEP;
+        
+        field.emit_move(Math.floor(x_pos), Math.floor(y_pos), d_x_pos, d_y_pos, 0.01);
+      }
+    }*/
+    
     field.update(TIMESTEP);
     
     field.draw_H(display);
     display.swap();
     ctx.drawImage(display.canvas, 0, 0, 640, 640);
-    
     
     // pen.clear();
     pen.begin();
