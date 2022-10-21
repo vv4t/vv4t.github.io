@@ -1,0 +1,107 @@
+<html>
+  <head>
+    <style>
+      body {
+        text-align: center;
+      }
+      
+      .main {
+        display: inline-flex;
+      }
+      
+      table {
+        table-layout: fixed;
+        border: 1px solid;
+        width: 300px;
+      }
+      
+      table, tr, td {
+        border: 1px solid;
+      }
+      
+      .info {
+        display: block;
+      }
+      
+      .info > button {
+        width: 49%;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="main">
+      <canvas width="800" height="600" id="canvas" style="border: 1px solid"></canvas>
+      <div class="info">
+        <table>
+          <tr>
+            <td>gear_ratio</td>
+            <td id="gear_ratio">0.00</td>
+          <tr>
+          <tr>
+            <td>velocity (km/h)</td>
+            <td id="velocity">0.00</td>
+          <tr>
+          <tr>
+            <td>rpm</td>
+            <td id="rpm">0.00</td>
+          <tr>
+          <tr>
+            <td>torque</td>
+            <td id="torque">0.00</td>
+          <tr>
+          <tr>
+            <td>slip ratio</td>
+            <td id="slip_ratio">0.00</td>
+          <tr>
+          <tr>
+            <td>slip angle</td>
+            <td id="slip_angle">0.00</td>
+          <tr>
+        </table>
+        <br>
+        <table>
+          <tr>
+            <td>W</td>
+            <td>throttle</td>
+          <tr>
+          <tr>
+            <td>SPACE</td>
+            <td>handbrake</td>
+          <tr>
+          <tr>
+            <td>R</td>
+            <td>restart</td>
+          <tr>
+          <tr>
+            <td>I</td>
+            <td>gear 1 (2.66)</td>
+          <tr>
+          <tr>
+            <td>O</td>
+            <td>gear 2 (1.78)</td>
+          <tr>
+          <tr>
+            <td>P</td>
+            <td>gear 3 (1.30)</td>
+          <tr>
+          <tr>
+            <td>J</td>
+            <td>gear 4 (1.00)</td>
+          <tr>
+          <tr>
+            <td>K</td>
+            <td>gear 5 (0.74)</td>
+          <tr>
+          <tr>
+            <td>L</td>
+            <td>gear 6 (0.5)</td>
+          <tr>
+        </table>
+        <button id="playground">gm_flat_chest</button>
+        <button id="track">track</button>
+      </div>
+    </div>
+    <script type="module" src="main.js"></script>
+    <p id="debug"></p>
+  </body>
+</html>
