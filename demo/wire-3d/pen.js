@@ -6,7 +6,7 @@ export class pen_t {
   constructor(canvas)
   {
     this.canvas = canvas;
-    this.aspect_ratio = canvas.height / canvas.width
+    this.aspect_ratio = canvas.height / canvas.width;
     this.ctx = canvas.getContext("2d");
   }
   

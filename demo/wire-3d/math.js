@@ -5,6 +5,11 @@ export function clamp(n, min, max)
   return Math.min(Math.max(n, min), max);
 }
 
+export function rand()
+{
+  return Math.random() - 0.5;
+}
+
 export class vec2_t {
   constructor(x = 0, y = 0)
   {
@@ -51,6 +56,21 @@ export class vec2_t {
   cross_up(v)
   {
     return new vec2_t(this.y * v, -this.x * v);
+  }
+  
+  cross(b)
+  {
+    return this.x * b.y - this.y * b.x;
+  }
+  
+  normalize()
+  {
+    return this.mulf(1 / this.length());
+  }
+  
+  length()
+  {
+    return Math.sqrt(this.dot(this));
   }
   
   copy()

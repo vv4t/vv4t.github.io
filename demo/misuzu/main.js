@@ -241,7 +241,7 @@ class hook_t {
       this.anchor = true;
     }
     
-    if (this.length > 100)
+    if (this.length > 300)
       this.release();
   }
   
