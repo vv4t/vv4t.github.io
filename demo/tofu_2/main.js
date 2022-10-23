@@ -46,6 +46,8 @@ function graph_torque(rpm, x_g, x_d)
   pen_torque.begin();
   
   const h = 60;
+  const scale_y = 6000;
+  const scale_x = 4000;
   
   for (const gear of gear_table) {
     for (let x = 0; x < h - 1; x++) {
@@ -55,25 +57,25 @@ function graph_torque(rpm, x_g, x_d)
       const x_h_a = x_a * 1.8 - 0.9;
       const x_h_b = x_b * 1.8 - 0.9;
       
-      const rpm_a = x_a * 6000 * gear * x_d;
-      const rpm_b = x_b * 6000 * gear * x_d;
+      const rpm_a = x_a * scale_x * gear * x_d;
+      const rpm_b = x_b * scale_x * gear * x_d;
       
-      if (rpm_a < 1000 || rpm_b > 6000)
+      if (rpm_a < 1000 || rpm_b > 5500)
         continue;
       
       const torque_a = torque_rpm_curve(rpm_a) * gear * x_d;
       const torque_b = torque_rpm_curve(rpm_b) * gear * x_d;
       
-      const y_a = torque_a / 4500;
-      const y_b = torque_b / 4500;
+      const y_a = torque_a / scale_y;
+      const y_b = torque_b / scale_y;
       
       pen_torque.line(new vec2_t(x_h_a, y_a), new vec2_t(x_h_b, y_b));
     }
   }
   
   const c_torque = torque_rpm_curve(rpm) * x_g * x_d;
-  const c_x = rpm / x_g / x_d / 6000 * 1.8 - 0.9;
-  const c_y = c_torque / 4500;
+  const c_x = rpm / x_g / x_d / scale_x * 1.8 - 0.9;
+  const c_y = c_torque / scale_y;
   
   pen_torque.circle(new vec2_t(c_x, c_y), 0.02);
   
@@ -82,6 +84,12 @@ function graph_torque(rpm, x_g, x_d)
 
 function torque_rpm_curve(rpm)
 {
+  const max_rpm = 5500;
+  if (rpm > max_rpm) {
+    const max_rpm_torque = -0.000025 * max_rpm * max_rpm + 400;
+    return -(rpm - 5500) + max_rpm_torque;
+  }
+  
   const x = rpm - 3000;
   return -0.000025 * x*x + 400;
 }
@@ -131,7 +139,7 @@ class wheel_t {
   apply_traction(car_vel, car_rot, weight, T_drive, T_brake, handbrake)
   {
     const C_t = 10000;
-    const C_a = 7000;
+    const C_a = 12000;
     
     const mu = 1.0;
     const F_max = mu * weight;
@@ -198,7 +206,7 @@ class car_t {
     this.prev_accel = 0;
     this.gear = 0;
     this.x_g = gear_table[0];
-    this.x_d = 3.42;
+    this.x_d = 4.42;
     
     this.particles = [];
     this.particle_tick = 0;
@@ -362,7 +370,7 @@ class car_t {
 };
 
 let car = new car_t();
-let fn_draw_track = draw_track;
+let fn_draw_track = draw_drag;
 let scene_model;
 
 function draw_track()
@@ -375,6 +383,25 @@ function draw_track()
   
   for (let y = -200; y < 200; y += 5) {
     for (let x = -200; x < 200; x += 5) {
+      const pos = new vec3_t(x, 0, y);
+      const right = new vec3_t(1, 0, 0);
+      const forward = new vec3_t(0.0, 0, 1);
+      
+      pen3d.line(pos.sub(right), pos.add(right));
+      pen3d.line(pos.sub(forward), pos.add(forward));
+    }
+  }
+}
+
+function draw_drag()
+{
+  for (let y = 0; y < 1000; y += 50) {
+    pen3d.circle(new vec3_t(-20, 3, y), 3);
+    pen3d.circle(new vec3_t(+20, 3, y), 3);
+  }
+  
+  for (let y = 0; y < 1000; y += 5) {
+    for (let x = -20; x < 20; x += 5) {
       const pos = new vec3_t(x, 0, y);
       const right = new vec3_t(1, 0, 0);
       const forward = new vec3_t(0.0, 0, 1);
@@ -446,7 +473,7 @@ function update()
     car.shift_up();
   }, () => {});
   
-  document.getElementById("playground").onclick = function () {
+  document.getElementById("flat").onclick = function () {
     car = new car_t();
     fn_draw_track = draw_track;
   };
@@ -454,6 +481,11 @@ function update()
   document.getElementById("track").onclick = function () {
     car = new car_t();
     fn_draw_track = () => draw_model(scene_model);
+  };
+  
+  document.getElementById("drag").onclick = function () {
+    car = new car_t();
+    fn_draw_track = () => draw_drag;
   };
   
   obj_load("scene.obj", (model) => {
