@@ -87,7 +87,7 @@ function torque_rpm_curve(rpm)
   const max_rpm = 5500;
   if (rpm > max_rpm) {
     const max_rpm_torque = -0.000025 * max_rpm * max_rpm + 400;
-    return -3 * (rpm - 5500) + max_rpm_torque;
+    return Math.max(-3 * (rpm - 5500) + max_rpm_torque, -1000);
   }
   
   const x = rpm - 3000;
