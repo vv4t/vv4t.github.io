@@ -485,7 +485,7 @@ function update()
   
   document.getElementById("drag").onclick = function () {
     car = new car_t();
-    fn_draw_track = () => draw_drag;
+    fn_draw_track = draw_drag;
   };
   
   obj_load("scene.obj", (model) => {
