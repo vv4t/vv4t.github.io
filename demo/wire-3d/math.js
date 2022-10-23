@@ -65,7 +65,10 @@ export class vec2_t {
   
   normalize()
   {
-    return this.mulf(1 / this.length());
+    const l = this.length();
+    if (l == 0)
+      return new vec2_t();
+    return this.mulf(1 / l);
   }
   
   length()
@@ -174,7 +177,10 @@ export class vec3_t {
   
   normalize()
   {
-    return this.mulf(1 / this.length());
+    const l = this.length();
+    if (l == 0)
+      return new vec3_t();
+    return this.mulf(1 / l);
   }
   
   copy()

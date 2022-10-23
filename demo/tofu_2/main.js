@@ -87,7 +87,7 @@ function torque_rpm_curve(rpm)
   const max_rpm = 5500;
   if (rpm > max_rpm) {
     const max_rpm_torque = -0.000025 * max_rpm * max_rpm + 400;
-    return -(rpm - 5500) + max_rpm_torque;
+    return -3 * (rpm - 5500) + max_rpm_torque;
   }
   
   const x = rpm - 3000;
@@ -96,7 +96,7 @@ function torque_rpm_curve(rpm)
 
 function rot_vel_rpm(rot_vel, x_g, x_d)
 {
-  return Math.max(rot_vel * x_g * x_d * 60 / (2 * Math.PI), 1000);
+  return Math.max(Math.abs(rot_vel * x_g * x_d * 60 / (2 * Math.PI)), 1000);
 }
 
 class particle_t {
@@ -152,7 +152,7 @@ class wheel_t {
     const spin_vel = this.rot_vel * WHEEL_RADIUS;
     
     const slip_ratio = (spin_vel - move_vel) / Math.max(abs_move_vel, 5);
-    const slip_angle = perp_wheel_dir.dot(car_vel.normalize());
+    const slip_angle = perp_wheel_dir.dot(car_vel) / Math.max(1, car_vel.length());
     
     this.slip_scale = Math.abs(slip_ratio * slip_angle) / 0.03;
     
@@ -165,7 +165,7 @@ class wheel_t {
     const F_traction = clamp(C_t * slip_ratio, -F_max, F_max);
     
     const T_traction = F_traction * WHEEL_RADIUS;
-    const T_total = T_drive - T_traction - Math.max(T_brake - T_drive);
+    const T_total = T_drive - T_traction - T_brake;
     
     const I_wheel = WHEEL_MASS * WHEEL_RADIUS * WHEEL_RADIUS / 2;
     
@@ -198,7 +198,7 @@ class car_t {
   constructor()
   {
     this.pos = new vec3_t(0, 0, 0);
-    this.vel = new vec3_t(0, 0, 2.0);
+    this.vel = new vec3_t(0, 0, 0.0);
     this.rot = -0.0;
     this.rot_vel = 0.0;
     this.wheel_rear = new wheel_t(0.0);
@@ -206,7 +206,7 @@ class car_t {
     this.prev_accel = 0;
     this.gear = 0;
     this.x_g = gear_table[0];
-    this.x_d = 4.42;
+    this.x_d = 4.24;
     
     this.particles = [];
     this.particle_tick = 0;
@@ -229,19 +229,18 @@ class car_t {
   shift_up()
   {
     if (this.gear < 5)
-      this.gear++;
-    this.set_gear(this.gear);
+      this.set_gear(this.gear + 1);
   }
   
   shift_down()
   {
     if (this.gear > 0)
-      this.gear--;
-    this.set_gear(this.gear);
+      this.set_gear(this.gear - 1);
   }
   
   set_gear(x_g)
   {
+    this.gear = x_g;
     this.x_g = gear_table[x_g];
   }
   
@@ -258,9 +257,20 @@ class car_t {
     
     const rpm = rot_vel_rpm(this.wheel_rear.rot_vel, this.x_g, this.x_d);
     const T_max = torque_rpm_curve(rpm);
-    const T_engine = throttle * T_max;
+    
+    let T_engine = throttle * T_max;
+    let T_brake = 0;
+    
+    if (brake) {
+      if (this.wheel_rear.rot_vel < 0) {
+          T_engine = -T_max * 0.8;
+          this.set_gear(0);
+      } else {
+        T_brake += 3000;
+      }
+    }
+    
     const T_drive = T_engine * this.x_g * this.x_d * 0.7;
-    const T_brake = brake ? 2000 : 0;
     
     const r_vel = this.vel.add(new vec3_t(this.rot_vel, 0, 0).rotate_y(this.rot));
     const r_F_traction = this.wheel_rear.apply_traction(this.vel, this.rot, W_r, T_drive, T_brake, handbrake);
@@ -444,7 +454,7 @@ function update()
   if (input.get_key(key.code("D")))
     car.steer(-0.03);
   
-  const throttle = input.get_key(key.code("W")) ? 1.0 : 0;
+  const throttle = input.get_key(key.code("W")) ? 2.0 : 0;
   const handbrake = input.get_key(key.code(" "));
   const brake = input.get_key(key.code("S"));
   
