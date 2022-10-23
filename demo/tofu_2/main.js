@@ -87,7 +87,7 @@ function torque_rpm_curve(rpm)
   const max_rpm = 5500;
   if (rpm > max_rpm) {
     const max_rpm_torque = -0.000025 * max_rpm * max_rpm + 400;
-    return Math.max(-3 * (rpm - 5500) + max_rpm_torque, -1000);
+    return Math.max(-4 * (rpm - 5500) + max_rpm_torque, -1000);
   }
   
   const x = rpm - 3000;
@@ -260,13 +260,15 @@ class car_t {
     
     let T_engine = throttle * T_max;
     let T_brake = 0;
+    let f_T_brake = 0;
     
     if (brake) {
       if (this.wheel_rear.rot_vel < 0) {
           T_engine = -T_max * 0.8;
           this.set_gear(0);
       } else {
-        T_brake += 3000;
+        T_brake = 3000;
+        f_T_brake = 3000;
       }
     }
     
@@ -277,7 +279,7 @@ class car_t {
     const r_T_traction = r_F_traction.cross(car_dir).y;
     
     const f_vel = this.vel.add(new vec3_t(-this.rot_vel, 0, 0).rotate_y(this.rot));
-    const f_F_traction = this.wheel_front.apply_traction(f_vel, this.rot, W_f, 0, false, false);
+    const f_F_traction = this.wheel_front.apply_traction(f_vel, this.rot, W_f, 0, f_T_brake, false);
     const f_T_traction = f_F_traction.cross(car_dir).y;
     
     const T_net = f_T_traction - r_T_traction;
