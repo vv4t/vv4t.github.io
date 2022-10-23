@@ -58,7 +58,7 @@ function graph_torque(rpm, x_g, x_d)
       const rpm_a = x_a * 6000 * gear * x_d;
       const rpm_b = x_b * 6000 * gear * x_d;
       
-      if (rpm_b > 6000)
+      if (rpm_a < 1000 || rpm_b > 6000)
         continue;
       
       const torque_a = torque_rpm_curve(rpm_a) * gear * x_d;
