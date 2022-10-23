@@ -130,8 +130,8 @@ class wheel_t {
   
   apply_traction(car_vel, car_rot, weight, T_drive, T_brake, handbrake)
   {
-    const C_t = 8000;
-    const C_a = 5000;
+    const C_t = 10000;
+    const C_a = 7000;
     
     const mu = 1.0;
     const F_max = mu * weight;
@@ -157,7 +157,7 @@ class wheel_t {
     const F_traction = clamp(C_t * slip_ratio, -F_max, F_max);
     
     const T_traction = F_traction * WHEEL_RADIUS;
-    const T_total = T_drive - T_traction - T_brake;
+    const T_total = T_drive - T_traction - Math.max(T_brake - T_drive);
     
     const I_wheel = WHEEL_MASS * WHEEL_RADIUS * WHEEL_RADIUS / 2;
     
