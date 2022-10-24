@@ -28,6 +28,7 @@ const elem_slip_ratio = document.getElementById("slip_ratio");
 const elem_slip_angle = document.getElementById("slip_angle");
 const elem_gear = document.getElementById("gear");
 const elem_time = document.getElementById("time");
+const elem_auto_gear = document.getElementById("auto_gear");
 
 const pen_torque = new pen_t(document.getElementById("graph_torque"));
 
@@ -39,6 +40,8 @@ const gear_table = [
   0.74,
   0.50
 ];
+
+let prev_rpm = 0;
 
 function graph_torque(rpm, x_g, x_d)
 {
@@ -77,7 +80,13 @@ function graph_torque(rpm, x_g, x_d)
   const c_x = rpm / x_g / x_d / scale_x * 1.8 - 0.9;
   const c_y = c_torque / scale_y;
   
+  const d_rpm = rpm - prev_rpm;
+  const d_torque_rpm = (torque_rpm_curve(rpm) * x_g * x_d - torque_rpm_curve(prev_rpm) * x_g * x_d) / Math.abs(d_rpm);
+  
+  pen_torque.line(new vec2_t(c_x, c_y), new vec2_t(c_x, c_y).add(new vec2_t(0.1 * d_rpm / Math.abs(d_rpm), 0.1 * d_torque_rpm)));
   pen_torque.circle(new vec2_t(c_x, c_y), 0.02);
+  
+  prev_rpm = rpm;
   
   pen_torque.stroke();
 }
@@ -161,7 +170,7 @@ class wheel_t {
       elem_slip_angle.innerHTML = (90 - Math.acos(Math.abs(slip_angle)) * 180 / Math.PI).toFixed(4);
     }
     
-    const F_lateral = clamp(-C_a * slip_angle, -16000, 16000);
+    const F_lateral = clamp(-C_a * slip_angle, -11000, 11000);
     const F_traction = clamp(C_t * slip_ratio, -F_max, F_max);
     
     const T_traction = F_traction * WHEEL_RADIUS;
@@ -207,6 +216,8 @@ class car_t {
     this.gear = 0;
     this.x_g = gear_table[0];
     this.x_d = 4.24;
+    this.prev_rpm = 0;
+    this.gear_tick = 0;
     
     this.particles = [];
     this.particle_tick = 0;
@@ -242,6 +253,25 @@ class car_t {
   {
     this.gear = x_g;
     this.x_g = gear_table[x_g];
+  }
+  
+  auto_gear()
+  {
+    this.gear_tick++;
+    if (this.gear_tick % 30 > 0)
+      return;
+    
+    const rpm = rot_vel_rpm(this.wheel_rear.rot_vel, this.x_g, this.x_d);
+    const d_rpm = rpm - this.prev_rpm;
+    const d_torque_rpm = (torque_rpm_curve(rpm) - torque_rpm_curve(this.prev_rpm)) / Math.abs(d_rpm);
+    
+    if (d_rpm < 0 && d_torque_rpm < 0)
+      this.shift_down();
+    
+    if (d_rpm > 0 && d_torque_rpm < 0)
+      this.shift_up();
+    
+    this.prev_rpm = rpm;
   }
   
   drive(throttle, handbrake, brake)
@@ -460,6 +490,8 @@ function update()
   const handbrake = input.get_key(key.code(" "));
   const brake = input.get_key(key.code("S"));
   
+  if (elem_auto_gear.checked)
+    car.auto_gear();
   car.drive(throttle, handbrake, brake);
   car.integrate();
   
