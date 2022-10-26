@@ -148,7 +148,7 @@ class wheel_t {
   apply_traction(car_vel, car_rot, weight, T_drive, T_brake, handbrake)
   {
     const C_t = 10000;
-    const C_a = 12000;
+    const C_a = 8000;
     
     const mu = 1.0;
     const F_max = mu * weight;
@@ -162,15 +162,16 @@ class wheel_t {
     
     const slip_ratio = (spin_vel - move_vel) / Math.max(abs_move_vel, 5);
     const slip_angle = perp_wheel_dir.dot(car_vel) / Math.max(1, car_vel.length());
+    this.slip_angle = slip_angle;
     
-    this.slip_scale = Math.abs(slip_ratio * slip_angle) / 0.03;
+    this.slip_scale = (Math.abs(slip_ratio) + Math.abs(slip_angle)) / 0.2;
     
     if (T_drive > 0) {
       elem_slip_ratio.innerHTML = slip_ratio.toFixed(4);
       elem_slip_angle.innerHTML = (90 - Math.acos(Math.abs(slip_angle)) * 180 / Math.PI).toFixed(4);
     }
     
-    const F_lateral = clamp(-C_a * slip_angle, -11000, 11000);
+    const F_lateral = -slip_angle * C_a;
     const F_traction = clamp(C_t * slip_ratio, -F_max, F_max);
     
     const T_traction = F_traction * WHEEL_RADIUS;
@@ -186,15 +187,15 @@ class wheel_t {
       this.rot += this.rot_vel * TIMESTEP;
     }
     
-    return wheel_dir.mulf(F_traction).add(perp_wheel_dir.mulf(F_lateral));
+    return wheel_dir.mulf(F_traction).add(perp_wheel_dir.mulf(F_lateral * Math.cos(this.dir)));
   }
   
   draw(pos, radius, car_rot)
   {
     pen3d.circle(pos, radius);
     
-    const front_wheel_a = new vec3_t(0, 0, radius * 1.5).rotate_y(this.dir + car_rot);
-    const front_wheel_b = new vec3_t(0, 0, -radius * 1.5).rotate_y(this.dir + car_rot);
+    const front_wheel_a = new vec3_t(0, 0, radius * 1.5).rotate_y(this.dir * 3 + car_rot);
+    const front_wheel_b = new vec3_t(0, 0, -radius * 1.5).rotate_y(this.dir * 3 + car_rot);
     const front_wheel_axis_a = new vec3_t(-radius, 0.0, 0).rotate_y(this.rot);
     const front_wheel_axis_b = new vec3_t(radius, 0.0, 0).rotate_y(this.rot);
     
@@ -271,7 +272,14 @@ class car_t {
   
   drive(throttle, handbrake, brake)
   {
-    this.wheel_front.dir -= 0.2 * this.wheel_front.dir;
+    if (Math.abs(this.wheel_rear.slip_angle) > 0.3) {
+      const vel_dir = this.vel.rotate_y(-this.rot);
+      const vel_rot = Math.atan2(-vel_dir.x, vel_dir.z);
+      
+      this.wheel_front.dir += 0.12 * (vel_rot * 0.06 - this.wheel_front.dir);
+    } else {
+      this.wheel_front.dir += 0.12 * (-this.wheel_front.dir);
+    }
     
     const car_dir = new vec3_t(0, 0, 1).rotate_y(this.rot);
     
@@ -395,8 +403,11 @@ class car_t {
     this.wheel_rear.draw(r_a, 0.3, this.rot);
     this.wheel_rear.draw(r_b, 0.3, this.rot);
     
-    this.wheel_front.draw(f_a, 0.3, this.rot);
-    this.wheel_front.draw(f_b, 0.3, this.rot);
+    const vel_dir = this.vel.rotate_y(-this.rot);
+    const vel_rot = Math.atan2(-vel_dir.x, vel_dir.z);
+    
+    this.wheel_front.draw(f_a, 0.3, this.rot + vel_rot * 0.5);
+    this.wheel_front.draw(f_b, 0.3, this.rot + vel_rot * 0.5);
     
     pen3d.line(r_a, r_b);
     pen3d.line(f_a, f_b);
@@ -477,9 +488,9 @@ function update()
     car = new car_t();
   
   if (input.get_key(key.code("A")))
-    car.steer(+0.03);
+    car.steer(+0.02);
   if (input.get_key(key.code("D")))
-    car.steer(-0.03);
+    car.steer(-0.02);
   
   const throttle = input.get_key(key.code("W")) ? 2.0 : 0;
   const handbrake = input.get_key(key.code(" "));
