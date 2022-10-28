@@ -131,7 +131,7 @@ function torque_rpm_curve(rpm)
   const max_rpm = 5500;
   if (rpm > max_rpm) {
     const max_rpm_torque = -0.000025 * max_rpm * max_rpm + 400;
-    return Math.max(-4 * (rpm - 5500) + max_rpm_torque, -1000);
+    return Math.max(-4 * (rpm - 5500) + max_rpm_torque, -2000);
   }
   
   const x = rpm - 3000;
@@ -326,15 +326,17 @@ class car_t {
     
     const volume = elem_volume.value / 100;
     
-    oscillator.frequency.value = Math.floor((rpm - 1000) / 6000 * 400 + 100);
-    gain_node.gain.value = ((rpm - 1000) / 6000 * 0.1 * throttle + 0.05) * volume;
-    
-    if (this.wheel_rear.slip_scale > 1.0) {
-      const interp = clamp((this.wheel_rear.slip_scale - 1.0) * 0.1, 0, 1.0);
-      slip_oscillator.frequency.value = Math.floor(100 + (1 - interp) * 200);
-      slip_gain_node.gain.value = interp * 0.5 * volume;
-    } else {
-      slip_gain_node.gain.value = 0;
+    if (oscillator) {
+      oscillator.frequency.value = Math.floor((rpm - 1000) / 6000 * 400 + 100);
+      gain_node.gain.value = ((rpm - 1000) / 6000 * 0.1 * throttle + 0.05) * volume;
+      
+      if (this.wheel_rear.slip_scale > 1.0) {
+        const interp = clamp((this.wheel_rear.slip_scale - 1.0) * 0.1, 0, 1.0);
+        slip_oscillator.frequency.value = Math.floor(100 + (1 - interp) * 200);
+        slip_gain_node.gain.value = interp * 0.5 * volume;
+      } else {
+        slip_gain_node.gain.value = 0;
+      }
     }
     
     let T_engine = throttle * T_max;
@@ -465,7 +467,7 @@ class car_t {
 
 let car = new car_t();
 let fn_draw_track = draw_drag;
-let scene_model;
+let scene_model = [];
 
 function draw_track()
 {
@@ -574,9 +576,19 @@ function update()
     fn_draw_track = draw_track;
   };
   
-  document.getElementById("track").onclick = function () {
+  document.getElementById("track_1").onclick = function () {
     car = new car_t();
-    fn_draw_track = () => draw_model(scene_model);
+    fn_draw_track = () => draw_model(scene_model[0]);
+  };
+  
+  document.getElementById("track_2").onclick = function () {
+    car = new car_t();
+    fn_draw_track = () => draw_model(scene_model[1]);
+  };
+  
+  document.getElementById("track_3").onclick = function () {
+    car = new car_t();
+    fn_draw_track = () => draw_model(scene_model[2]);
   };
   
   document.getElementById("drag").onclick = function () {
@@ -584,10 +596,11 @@ function update()
     fn_draw_track = draw_drag;
   };
   
-  obj_load("scene.obj", (model) => {
-    scene_model = model;
-    setInterval(function () {
-      update();
-    }, TIMESTEP * 1000);
-  });
+  obj_load("scene.obj", (model) => { scene_model[0] = model; });
+  obj_load("scene_2.obj", (model) => { scene_model[1] = model; });
+  obj_load("scene_3.obj", (model) => { scene_model[2] = model; });
+  
+  setInterval(function () {
+    update();
+  }, TIMESTEP * 1000);
 })();
