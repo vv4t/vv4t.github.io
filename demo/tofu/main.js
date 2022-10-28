@@ -29,8 +29,43 @@ const elem_slip_angle = document.getElementById("slip_angle");
 const elem_gear = document.getElementById("gear");
 const elem_time = document.getElementById("time");
 const elem_auto_gear = document.getElementById("auto_gear");
+const elem_volume = document.getElementById("volume");
 
 const pen_torque = new pen_t(document.getElementById("graph_torque"));
+
+let oscillator;
+let gain_node;
+
+let slip_oscillator;
+let slip_gain_node;
+
+document.addEventListener("keydown", function() {
+  if (!oscillator) {
+    const context = new AudioContext();
+    gain_node = context.createGain();
+
+    gain_node.connect(context.destination);
+    gain_node.gain.value = 0.05;
+
+    oscillator = context.createOscillator();
+    oscillator.connect(gain_node);
+    oscillator.frequency.value = 100;
+    oscillator.type = "sawtooth";
+    oscillator.start();
+    
+    slip_gain_node = context.createGain();
+
+    slip_gain_node.connect(context.destination);
+    slip_gain_node.gain.value = 0.05;
+
+    slip_oscillator = context.createOscillator();
+    slip_oscillator.connect(slip_gain_node);
+    slip_oscillator.frequency.value = 100;
+    slip_oscillator.type = "sine";
+    slip_oscillator.detune.value = 1200;
+    slip_oscillator.start();
+  }
+});
 
 const gear_table = [
   2.66,
@@ -164,7 +199,7 @@ class wheel_t {
     const slip_angle = perp_wheel_dir.dot(car_vel) / Math.max(1, car_vel.length());
     this.slip_angle = slip_angle;
     
-    this.slip_scale = (Math.abs(slip_ratio) + Math.abs(slip_angle)) / 0.2;
+    this.slip_scale = ( + Math.abs(slip_angle)) / 0.2;
     
     if (T_drive > 0) {
       elem_slip_ratio.innerHTML = slip_ratio.toFixed(4);
@@ -259,14 +294,12 @@ class car_t {
   auto_gear()
   {
     this.gear_tick++;
-    if (this.gear_tick % 30 > 0)
-      return;
     
     const rpm = rot_vel_rpm(this.wheel_rear.rot_vel, this.x_g, this.x_d);
     
     if (rpm < 2000)
       this.shift_down();
-    if (rpm > 4000)
+    if (rpm > 4200)
       this.shift_up();
   }
   
@@ -290,6 +323,19 @@ class car_t {
     
     const rpm = rot_vel_rpm(this.wheel_rear.rot_vel, this.x_g, this.x_d);
     const T_max = torque_rpm_curve(rpm);
+    
+    const volume = elem_volume.value / 100;
+    
+    oscillator.frequency.value = Math.floor((rpm - 1000) / 6000 * 400 + 100);
+    gain_node.gain.value = ((rpm - 1000) / 6000 * 0.1 * throttle + 0.05) * volume;
+    
+    if (this.wheel_rear.slip_scale > 1.0) {
+      const interp = clamp((this.wheel_rear.slip_scale - 1.0) * 0.1, 0, 1.0);
+      slip_oscillator.frequency.value = Math.floor(100 + (1 - interp) * 200);
+      slip_gain_node.gain.value = interp * 0.5 * volume;
+    } else {
+      slip_gain_node.gain.value = 0;
+    }
     
     let T_engine = throttle * T_max;
     let T_brake = 0;
