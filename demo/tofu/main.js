@@ -61,7 +61,7 @@ document.addEventListener("keydown", function() {
     slip_oscillator = context.createOscillator();
     slip_oscillator.connect(slip_gain_node);
     slip_oscillator.frequency.value = 100;
-    slip_oscillator.type = "sine";
+    slip_oscillator.type = "sawtooth";
     slip_oscillator.detune.value = 1200;
     slip_oscillator.start();
   }
@@ -144,11 +144,11 @@ function rot_vel_rpm(rot_vel, x_g, x_d)
 }
 
 class particle_t {
-  constructor(pos, life, vel)
+  constructor()
   {
-    this.pos = pos;
-    this.vel = vel;
-    this.life = life;
+    this.pos = new vec3_t();
+    this.vel = new vec3_t();
+    this.life = 0;
   }
   
   shoot(origin, dir)
@@ -171,13 +171,33 @@ class particle_t {
   }
 };
 
+class skid_t {
+  constructor()
+  {
+    this.pos = new vec3_t();
+    this.dir = new vec3_t();
+  }
+  
+  skid(pos, dir)
+  {
+    this.pos = pos;
+    this.dir = dir;
+  }
+  
+  draw()
+  {
+    pen3d.line(this.pos, this.pos.add(this.dir));
+  }
+};
+
 class wheel_t {
   constructor(dir)
   {
     this.dir = dir;
     this.rot = 0;
     this.rot_vel = 0;
-    this.slip_scale = 0;
+    this.slip_angle = 0;
+    this.slip_ratio = 0;
   }
   
   apply_traction(car_vel, car_rot, weight, T_drive, T_brake, handbrake)
@@ -195,19 +215,11 @@ class wheel_t {
     const abs_move_vel = Math.abs(move_vel);
     const spin_vel = this.rot_vel * WHEEL_RADIUS;
     
-    const slip_ratio = (spin_vel - move_vel) / Math.max(abs_move_vel, 5);
-    const slip_angle = perp_wheel_dir.dot(car_vel) / Math.max(1, car_vel.length());
-    this.slip_angle = slip_angle;
+    this.slip_ratio = (spin_vel - move_vel) / Math.max(abs_move_vel, 5);
+    this.slip_angle = perp_wheel_dir.dot(car_vel) / Math.max(1, car_vel.length());
     
-    this.slip_scale = ( + Math.abs(slip_angle)) / 0.2;
-    
-    if (T_drive > 0) {
-      elem_slip_ratio.innerHTML = slip_ratio.toFixed(4);
-      elem_slip_angle.innerHTML = (90 - Math.acos(Math.abs(slip_angle)) * 180 / Math.PI).toFixed(4);
-    }
-    
-    const F_lateral = -slip_angle * C_a;
-    const F_traction = clamp(C_t * slip_ratio, -F_max, F_max);
+    const F_lateral = -this.slip_angle * C_a;
+    const F_traction = clamp(C_t * this.slip_ratio, -F_max, F_max);
     
     const T_traction = F_traction * WHEEL_RADIUS;
     const T_total = T_drive - T_traction - T_brake;
@@ -227,15 +239,23 @@ class wheel_t {
   
   draw(pos, radius, car_rot)
   {
-    pen3d.circle(pos, radius);
+    const N = 4;
     
-    const front_wheel_a = new vec3_t(0, 0, radius * 1.5).rotate_y(this.dir * 3 + car_rot);
-    const front_wheel_b = new vec3_t(0, 0, -radius * 1.5).rotate_y(this.dir * 3 + car_rot);
-    const front_wheel_axis_a = new vec3_t(-radius, 0.0, 0).rotate_y(this.rot);
-    const front_wheel_axis_b = new vec3_t(radius, 0.0, 0).rotate_y(this.rot);
-    
-    pen3d.line(pos.add(front_wheel_a), pos.add(front_wheel_b));
-    pen3d.line(pos.add(front_wheel_axis_a), pos.add(front_wheel_axis_b));
+    for (let i = 0; i < N; i++) {
+      const theta = Math.PI / N * i;
+      
+      const a_a = new vec3_t(-0.1, 0, -radius).rotate_x(this.rot + theta).rotate_y(this.dir * 3 + car_rot);
+      const a_b = new vec3_t(+0.1, 0, -radius).rotate_x(this.rot + theta).rotate_y(this.dir * 3 + car_rot);
+      
+      const b_a = new vec3_t(-0.1, 0, +radius).rotate_x(this.rot + theta).rotate_y(this.dir * 3 + car_rot);
+      const b_b = new vec3_t(+0.1, 0, +radius).rotate_x(this.rot + theta).rotate_y(this.dir * 3 + car_rot);
+      
+      pen3d.line(pos.add(a_a), pos.add(a_b));
+      pen3d.line(pos.add(b_a), pos.add(b_b));
+      
+      pen3d.line(pos.add(a_a), pos.add(b_a));
+      pen3d.line(pos.add(a_b), pos.add(b_b));
+    }
   }
 };
 
@@ -255,10 +275,15 @@ class car_t {
     this.prev_rpm = 0;
     this.gear_tick = 0;
     
+    this.skids = [];
+    this.skid_id = 0;
+    for (let i = 0; i < 30; i++)
+      this.skids[i] = new skid_t();
+    
     this.particles = [];
     this.particle_tick = 0;
     this.particle_id = 0;
-    for (let i = 0; i < 30; i++)
+    for (let i = 0; i < 80; i++)
       this.particles[i] = new particle_t();
   }
   
@@ -327,13 +352,14 @@ class car_t {
     const volume = elem_volume.value / 100;
     
     if (oscillator) {
-      oscillator.frequency.value = Math.floor((rpm - 1000) / 6000 * 400 + 100);
+      oscillator.frequency.value = Math.floor((rpm - 1000) / 6000 * 300 + 50);
       gain_node.gain.value = ((rpm - 1000) / 6000 * 0.1 * throttle + 0.05) * volume;
       
-      if (this.wheel_rear.slip_scale > 1.0) {
-        const interp = clamp((this.wheel_rear.slip_scale - 1.0) * 0.1, 0, 1.0);
-        slip_oscillator.frequency.value = Math.floor(100 + (1 - interp) * 200);
-        slip_gain_node.gain.value = interp * 0.5 * volume;
+      if (Math.abs(this.wheel_rear.slip_angle) > 0.2) {
+        const interp = clamp((Math.abs(this.wheel_rear.slip_angle) - 0.2) / 0.2 * 0.1, 0, 1.0);
+        debug.innerHTML = interp.toPrecision(4);
+        slip_oscillator.frequency.value = Math.floor(300 + (1 - interp) * 200);
+        slip_gain_node.gain.value = interp * 0.2 * volume;
       } else {
         slip_gain_node.gain.value = 0;
       }
@@ -380,19 +406,24 @@ class car_t {
     elem_velocity.innerHTML = (this.vel.length() * 3.6).toFixed(4);
     elem_torque.innerHTML = T_drive.toFixed(4);
     elem_gear.innerHTML = this.gear + 1;
+    elem_slip_ratio.innerHTML = this.wheel_rear.slip_ratio.toFixed(4);
+    elem_slip_angle.innerHTML = (90 - Math.acos(Math.abs(this.wheel_rear.slip_angle)) * 180 / Math.PI).toFixed(4);
   }
   
   play_particles()
   {
     this.particle_tick++;
     
+    const car_dir = new vec3_t(0, 0, 1).rotate_y(this.rot);
     const right = new vec3_t(0.5, 0, 0).rotate_y(this.rot);
     
+    const car_pos = this.pos.sub(new vec3_t(0, 0.2, 0));
+    
     const r_dir = new vec3_t(0, 0, -1.0).rotate_y(this.rot);
-    const r_pos = this.pos.add(r_dir);
+    const r_pos = car_pos.add(r_dir);
     
     const f_dir = new vec3_t(0, 0, 1.0).rotate_y(this.rot);
-    const f_pos = this.pos.add(f_dir);
+    const f_pos = car_pos.add(f_dir);
     
     const r_a = r_pos.sub(right);
     const r_b = r_pos.add(right);
@@ -400,20 +431,35 @@ class car_t {
     const f_a = f_pos.sub(right);
     const f_b = f_pos.add(right);
     
-    if (this.particle_tick % 3 == 0) {
-      if (this.wheel_rear.slip_scale > 1.0) {
-        this.particles[this.particle_id].shoot(r_a, new vec3_t(rand() * 5, 6, rand() * 5));
+    if (this.particle_tick % 2 == 0) {
+      if (this.wheel_rear.slip_ratio > 0.7) {
+        const dir = this.vel.mulf(0.5);
+        
+        this.particles[this.particle_id].shoot(r_a, new vec3_t(rand() * 3, 5, rand() * 3).rotate_y(this.rot).add(dir));
         this.particle_id = (this.particle_id + 1) % this.particles.length;
-        this.particles[this.particle_id].shoot(r_b, new vec3_t(rand() * 5, 6, rand() * 5));
+        this.particles[this.particle_id].shoot(r_b, new vec3_t(rand() * 3, 5, rand() * 3).rotate_y(this.rot).add(dir));
         this.particle_id = (this.particle_id + 1) % this.particles.length;
       }
       
-      if (this.wheel_front.slip_scale > 1.0) {
-        this.particles[this.particle_id].shoot(f_a, new vec3_t(rand() * 5, 5, rand() * 5));
+      if (this.wheel_front.slip_ratio > 0.7) {
+        this.particles[this.particle_id].shoot(f_a, new vec3_t(rand() * 5, 4, rand() * 5).add(dir));
         this.particle_id = (this.particle_id + 1) % this.particles.length;
-        this.particles[this.particle_id].shoot(f_b, new vec3_t(rand() * 5, 5, rand() * 5));
+        this.particles[this.particle_id].shoot(f_b, new vec3_t(rand() * 5, 4, rand() * 5).add(dir));
         this.particle_id = (this.particle_id + 1) % this.particles.length;
       }
+    }
+    
+    if (this.particle_tick % 3 == 0) {
+      if (Math.abs(this.wheel_rear.slip_angle) > 0.2) {
+        this.skids[this.skid_id].skid(r_a, car_dir.mulf(0.5 + rand()));
+        this.skid_id = (this.skid_id + 1) % this.skids.length;
+        this.skids[this.skid_id].skid(r_b, car_dir.mulf(0.5 + rand()));
+        this.skid_id = (this.skid_id + 1) % this.skids.length;
+      }
+    }
+    
+    for (const skids of this.skids) {
+      skids.draw();
     }
     
     for (const particle of this.particles) {
@@ -440,7 +486,7 @@ class car_t {
     const f_a = f_pos.sub(right);
     const f_b = f_pos.add(right);
     
-    const hood = car.pos.add(new vec3_t(0, 1, 0));
+    const hood = car.pos.add(new vec3_t(0, 0.6, -0.3).rotate_y(this.rot));
     pen3d.line(r_a, hood);
     pen3d.line(r_b, hood);
     pen3d.line(f_a, hood);
@@ -448,14 +494,14 @@ class car_t {
     
     pen3d.line(r_pos, f_pos);
     pen3d.circle(this.pos, 0.1);
-    this.wheel_rear.draw(r_a, 0.3, this.rot);
-    this.wheel_rear.draw(r_b, 0.3, this.rot);
+    this.wheel_rear.draw(r_a, 0.2, this.rot);
+    this.wheel_rear.draw(r_b, 0.2, this.rot);
     
     const vel_dir = this.vel.rotate_y(-this.rot);
     const vel_rot = Math.atan2(-vel_dir.x, vel_dir.z);
     
-    this.wheel_front.draw(f_a, 0.3, this.rot + vel_rot * 0.5);
-    this.wheel_front.draw(f_b, 0.3, this.rot + vel_rot * 0.5);
+    this.wheel_front.draw(f_a, 0.2, this.rot + vel_rot * 0.5);
+    this.wheel_front.draw(f_b, 0.2, this.rot + vel_rot * 0.5);
     
     pen3d.line(r_a, r_b);
     pen3d.line(f_a, f_b);
