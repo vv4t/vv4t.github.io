@@ -13,6 +13,8 @@ const input = new input_t(canvas);
 const camera = new camera_t(new vec3_t(), new vec3_t());
 const pen3d = new pen3d_t(pen, camera, 1.3 * canvas.height / canvas.width);
 
+pen.color("white");
+
 const debug = document.getElementById("debug");
 
 const TIMESTEP = 0.015;
@@ -140,7 +142,7 @@ function torque_rpm_curve(rpm)
 
 function rot_vel_rpm(rot_vel, x_g, x_d)
 {
-  return Math.max(Math.abs(rot_vel * x_g * x_d * 60 / (2 * Math.PI)), 1000);
+  return clamp(Math.abs(rot_vel * x_g * x_d * 60 / (2 * Math.PI)), 1000, 6000);
 }
 
 class particle_t {
@@ -202,6 +204,8 @@ class wheel_t {
   
   apply_traction(car_vel, car_rot, weight, T_drive, T_brake, handbrake)
   {
+    this.dir = clamp(this.dir, -Math.PI / 2, +Math.PI / 2);
+    
     const C_t = 10000;
     const C_a = 8000;
     
@@ -330,10 +334,9 @@ class car_t {
   
   drive(throttle, handbrake, brake)
   {
-    if (Math.abs(this.wheel_rear.slip_angle) > 0.3) {
-      const vel_dir = this.vel.rotate_y(-this.rot);
+    const vel_dir = this.vel.rotate_y(-this.rot);
+    if (Math.abs(this.wheel_rear.slip_angle) > 0.3 && vel_dir.z > 0) {
       const vel_rot = Math.atan2(-vel_dir.x, vel_dir.z);
-      
       this.wheel_front.dir += 0.12 * (vel_rot * 0.06 - this.wheel_front.dir);
     } else {
       this.wheel_front.dir += 0.12 * (-this.wheel_front.dir);
@@ -352,8 +355,8 @@ class car_t {
     const volume = elem_volume.value / 100;
     
     if (oscillator) {
-      oscillator.frequency.value = Math.floor((rpm - 1000) / 6000 * 300 + 50);
-      gain_node.gain.value = ((rpm - 1000) / 6000 * 0.1 * throttle + 0.05) * volume;
+      oscillator.frequency.value = clamp(Math.floor((rpm - 1000) / 6000 * 300 + 50), 50, 300);
+      gain_node.gain.value = clamp((rpm - 1000) / 6000 * 0.1 * throttle + 0.05, 0, 1.0) * volume;
       
       if (Math.abs(this.wheel_rear.slip_angle) > 0.2) {
         const interp = clamp((Math.abs(this.wheel_rear.slip_angle) - 0.2) / 0.2 * 0.1, 0, 1.0);
@@ -498,7 +501,13 @@ class car_t {
     this.wheel_rear.draw(r_b, 0.2, this.rot);
     
     const vel_dir = this.vel.rotate_y(-this.rot);
+    if (vel_dir.z < 0) {
+      vel_dir.x *= -1;
+      vel_dir.z *= -1;
+    }
     const vel_rot = Math.atan2(-vel_dir.x, vel_dir.z);
+    
+    debug.innerHTML = vel_rot.toPrecision(4);
     
     this.wheel_front.draw(f_a, 0.2, this.rot + vel_rot * 0.5);
     this.wheel_front.draw(f_b, 0.2, this.rot + vel_rot * 0.5);
