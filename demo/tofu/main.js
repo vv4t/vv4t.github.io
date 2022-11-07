@@ -34,6 +34,7 @@ const elem_auto_gear = document.getElementById("auto_gear");
 const elem_volume = document.getElementById("volume");
 
 const pen_torque = new pen_t(document.getElementById("graph_torque"));
+pen_torque.color("white");
 
 let oscillator;
 let gain_node;
@@ -128,16 +129,21 @@ function graph_torque(rpm, x_g, x_d)
   pen_torque.stroke();
 }
 
+function _torque_rpm_curve(rpm)
+{
+  const x = rpm - 3000;
+  return -0.000025 * x*x + 400;
+}
+
 function torque_rpm_curve(rpm)
 {
   const max_rpm = 5500;
   if (rpm > max_rpm) {
-    const max_rpm_torque = -0.000025 * max_rpm * max_rpm + 400;
+    const max_rpm_torque = _torque_rpm_curve(max_rpm);
     return Math.max(-4 * (rpm - 5500) + max_rpm_torque, -2000);
   }
   
-  const x = rpm - 3000;
-  return -0.000025 * x*x + 400;
+  return _torque_rpm_curve(rpm);
 }
 
 function rot_vel_rpm(rot_vel, x_g, x_d)
