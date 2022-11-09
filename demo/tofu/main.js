@@ -101,7 +101,7 @@ function graph_torque(rpm, x_g, x_d)
       const rpm_a = x_a * scale_x * gear * x_d;
       const rpm_b = x_b * scale_x * gear * x_d;
       
-      if (rpm_a < 1000 || rpm_b > 5500)
+      if (rpm_a < 1000 || rpm_b > 6000)
         continue;
       
       const torque_a = torque_rpm_curve(rpm_a) * gear * x_d;
@@ -389,6 +389,7 @@ class car_t {
     }
     
     const T_drive = T_engine * this.x_g * this.x_d * 0.7;
+    debug.innerHTML = T_drive;
     
     const r_vel = this.vel.add(new vec3_t(this.rot_vel, 0, 0).rotate_y(this.rot));
     const r_F_traction = this.wheel_rear.apply_traction(this.vel, this.rot, W_r, T_drive, T_brake, handbrake);
@@ -512,8 +513,6 @@ class car_t {
       vel_dir.z *= -1;
     }
     const vel_rot = Math.atan2(-vel_dir.x, vel_dir.z);
-    
-    debug.innerHTML = vel_rot.toPrecision(4);
     
     this.wheel_front.draw(f_a, 0.2, this.rot + vel_rot * 0.5);
     this.wheel_front.draw(f_b, 0.2, this.rot + vel_rot * 0.5);
