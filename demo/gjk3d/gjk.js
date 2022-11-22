@@ -3,7 +3,7 @@
 import { pen_t } from "../wire-3d/pen.js";
 import { pen3d_t } from "../wire-3d/pen3d.js";
 import { input_t, key } from "../wire-3d/input.js";
-import { clamp, vec2_t, vec3_t } from "../wire-3d/math.js";
+import { clamp, vec2_t, vec3_t, rand } from "../wire-3d/math.js";
 import { camera_t } from "../wire-3d/camera.js";
 import { obj_load } from "../misuzu/obj.js";
 
@@ -15,52 +15,87 @@ const input = new input_t(canvas);
 
 const TIMESTEP = 0.015;
 
-let hull_cube;
-let hull_tetra;
+const hull_arr = [];
 
-obj_load("cube.obj", (model) => hull_cube = new hull_t(model) );
-obj_load("tetra.obj", (model) => hull_tetra = new hull_t(model) );
+obj_load("cube.obj", (model) => {
+  for (let i = 0; i < 10; i++) {
+    const hull = new hull_t(model);
+    hull.pos = new vec3_t(rand() * 20, rand() * 20, rand() * 20);
+    hull_arr.push(hull);
+  }
+});
+obj_load("tetra.obj", (model) => {
+  for (let i = 0; i < 10; i++) {
+    const hull = new hull_t(model);
+    hull.pos = new vec3_t(rand() * 20, rand() * 20, rand() * 20);
+    hull_arr.push(hull);
+  }
+});
+
+let hull_select;
 
 function update()
 {
   free_look();
   free_move();
   
-  if (input.get_key(key.code("Q"))) {
+  if (input.get_key(key.code("E"))) {
     const front_offset = new vec3_t(0, 0, 5).rotate_zxy(camera.rot);
-    hull_tetra.pos = camera.pos.add(front_offset);
+    if (!hull_select) {
+      let min_d = 10000;
+      for (const hull of hull_arr) {
+        const delta_p = camera.pos.add(front_offset).sub(hull.pos);
+        const d = delta_p.dot(delta_p);
+        
+        if (d < min_d && d < 3) {
+          min_d = d;
+          hull_select = hull;
+        }
+      }
+    } else {
+      hull_select.pos = camera.pos.add(front_offset);
+      
+      if (input.get_key(key.code("J")))
+        hull_select.rotate_x(0.01);
+      if (input.get_key(key.code("K")))
+        hull_select.rotate_y(0.01);
+      if (input.get_key(key.code("L")))
+        hull_select.rotate_z(0.01);
+    }
+  } else {
+    hull_select = null;
   }
-  
-  if (input.get_key(key.code("E")))
-    hull_tetra.rotate_y(TIMESTEP);
-  if (input.get_key(key.code("R")))
-    hull_tetra.rotate_x(TIMESTEP);
-  if (input.get_key(key.code("T")))
-    hull_tetra.rotate_z(TIMESTEP);
   
   pen.clear();
   
-  const [normal, depth] = compute_gjk(hull_cube, hull_tetra);
-  
-  if (normal)
-    hull_cube.pos = hull_cube.pos.add(normal.mulf(-depth));
-  
   pen.begin();
-  pen.color(normal ? "red" : "green");
-  hull_tetra.draw();
+  pen.color("blue");
+  draw_grid();
   pen.stroke();
   
-  pen.begin();
-  pen.color("green");
-  for (let i = -20; i <= 20; i++)
-    for (let j = -20; j <= 20; j++)
-      pen3d.circle(new vec3_t(i, -1, j), 0.01);
-  pen.stroke();
+  for (let i = 0; i < hull_arr.length; i++) {
+    for (let j = i + 1; j < hull_arr.length; j++) {
+      const [normal, depth] = compute_gjk(hull_arr[i], hull_arr[j]);
+      
+      if (normal) {
+        hull_arr[i].pos = hull_arr[i].pos.add(normal.mulf(-depth * 0.5));
+        hull_arr[j].pos = hull_arr[j].pos.add(normal.mulf(depth * 0.5));
+      }
+    }
+  }
   
   pen.begin();
   pen.color("black");
-  hull_cube.draw();
+  for (const hull of hull_arr)
+    hull.draw();
   pen.stroke();
+}
+
+function draw_grid()
+{
+  for (let i = -20; i <= 20; i++)
+    for (let j = -20; j <= 20; j++)
+      pen3d.circle(new vec3_t(i, -1, j), 0.03);
 }
 
 function cross_from(a, b, c)
@@ -201,8 +236,7 @@ class polytope_t {
   {
     let normal, depth;
     
-    const z = parseInt(document.getElementById("z").value);
-    for (let i = 0; i < z; i++) {
+    for (let i = 0; i < 40; i++) {
       const f_i = this.find_closest_face();
       const f = this.faces[f_i];
       const p = support(hull_a, hull_b, f.normal);

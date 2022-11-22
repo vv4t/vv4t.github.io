@@ -140,8 +140,7 @@ class polytope_t {
   {
     let normal, depth;
     
-    const z = parseInt(document.getElementById("z").value);
-    for (let i = 0; i < z; i++) {
+    for (let i = 0; i < 40; i++) {
       const f_i = this.find_closest_face();
       const f = this.faces[f_i];
       const p = support(hull_a, hull_b, f.normal);
