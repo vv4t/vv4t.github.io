@@ -3,7 +3,7 @@
 import { file_load } from "./file.js";
 import { clamp, vec2_t, vec3_t } from "../wire-3d/math.js";
 
-class face_t {
+export class face_t {
   constructor(vertices, normal)
   {
     this.vertices = vertices;
@@ -11,14 +11,14 @@ class face_t {
   }
 };
 
-class mesh_t {
+export class mesh_t {
   constructor(faces)
   {
     this.faces = faces;
   }
 };
 
-class model_t {
+export class model_t {
   constructor(meshes)
   {
     this.meshes = meshes;

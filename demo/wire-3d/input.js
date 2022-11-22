@@ -75,6 +75,9 @@ export class input_t {
   from_screen_space(pos)
   {
     return new vec2_t(
+      pos.x / (this.canvas.height / 2.0) - canvas.width / canvas.height,
+      -pos.y / (this.canvas.height / 2.0) + 1);
+    return new vec2_t(
       pos.x / (this.canvas.width / 2.0) - 1,
       -pos.y / (this.canvas.height / 2.0) + 1);
   }
