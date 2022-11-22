@@ -1,12 +1,5 @@
 # Photography 1
 
-## Preface
-
-Assortment of amature photos taken by me on my phone while walking around.
-Though these images are mundane in nature, the idea that they capture a precise
-snapshot of a moment in time, preserving all visual details, is still
-intriguing (to me at least).
-
 ![1](assets/photography_1/1.jpg)
 
 ![2](assets/photography_1/2.jpg)
