@@ -101,7 +101,7 @@ function graph_torque(rpm, x_g, x_d)
       const rpm_a = x_a * scale_x * gear * x_d;
       const rpm_b = x_b * scale_x * gear * x_d;
       
-      if (rpm_a < 1000 || rpm_b > 6000)
+      if (rpm_a < 1000 || rpm_b > 5500)
         continue;
       
       const torque_a = torque_rpm_curve(rpm_a) * gear * x_d;
@@ -212,7 +212,7 @@ class wheel_t {
   {
     this.dir = clamp(this.dir, -Math.PI / 2, +Math.PI / 2);
     
-    const C_t = 10000;
+    const C_t = 8000;
     const C_a = 8000;
     
     const mu = 1.0;
@@ -228,7 +228,7 @@ class wheel_t {
     this.slip_ratio = (spin_vel - move_vel) / Math.max(abs_move_vel, 5);
     this.slip_angle = perp_wheel_dir.dot(car_vel) / Math.max(1, car_vel.length());
     
-    const F_lateral = -this.slip_angle * C_a;
+    const F_lateral = -clamp(C_a * this.slip_angle, -5000, 5000);
     const F_traction = clamp(C_t * this.slip_ratio, -F_max, F_max);
     
     const T_traction = F_traction * WHEEL_RADIUS;
@@ -283,7 +283,6 @@ class car_t {
     this.x_g = gear_table[0];
     this.x_d = 4.24;
     this.prev_rpm = 0;
-    this.gear_tick = 0;
     
     this.skids = [];
     this.skid_id = 0;
@@ -328,30 +327,22 @@ class car_t {
   
   auto_gear()
   {
-    this.gear_tick++;
-    
     const rpm = rot_vel_rpm(this.wheel_rear.rot_vel, this.x_g, this.x_d);
     
     if (rpm < 2000)
       this.shift_down();
-    if (rpm > 4200)
+    if (rpm > 4500)
       this.shift_up();
   }
   
   drive(throttle, handbrake, brake)
   {
-    const vel_dir = this.vel.rotate_y(-this.rot);
-    if (Math.abs(this.wheel_rear.slip_angle) > 0.3 && vel_dir.z > 0) {
-      const vel_rot = Math.atan2(-vel_dir.x, vel_dir.z);
-      this.wheel_front.dir += 0.12 * (vel_rot * 0.06 - this.wheel_front.dir);
-    } else {
-      this.wheel_front.dir += 0.12 * (-this.wheel_front.dir);
-    }
+    this.wheel_front.dir += 0.12 * (-this.wheel_front.dir);
     
     const car_dir = new vec3_t(0, 0, 1).rotate_y(this.rot);
     
-    const W_f = 9.8 * CAR_MASS - 0.3 * CAR_MASS * this.prev_accel;
-    const W_r = 9.8 * CAR_MASS + 0.3 * CAR_MASS * this.prev_accel;
+    const W_f = 0.5 * 9.8 * CAR_MASS - 0.3 * CAR_MASS * this.prev_accel;
+    const W_r = 0.5 * 9.8 * CAR_MASS + 0.3 * CAR_MASS * this.prev_accel;
     
     const I_car = 1/12 * CAR_MASS;
     
@@ -366,7 +357,6 @@ class car_t {
       
       if (Math.abs(this.wheel_rear.slip_angle) > 0.2) {
         const interp = clamp((Math.abs(this.wheel_rear.slip_angle) - 0.2) / 0.2 * 0.1, 0, 1.0);
-        debug.innerHTML = interp.toPrecision(4);
         slip_oscillator.frequency.value = Math.floor(300 + (1 - interp) * 200);
         slip_gain_node.gain.value = interp * 0.2 * volume;
       } else {
@@ -393,11 +383,11 @@ class car_t {
     
     const r_vel = this.vel.add(new vec3_t(this.rot_vel, 0, 0).rotate_y(this.rot));
     const r_F_traction = this.wheel_rear.apply_traction(this.vel, this.rot, W_r, T_drive, T_brake, handbrake);
-    const r_T_traction = r_F_traction.cross(car_dir).y;
+    const r_T_traction = 0.5 * r_F_traction.cross(car_dir).y;
     
     const f_vel = this.vel.add(new vec3_t(-this.rot_vel, 0, 0).rotate_y(this.rot));
     const f_F_traction = this.wheel_front.apply_traction(f_vel, this.rot, W_f, 0, f_T_brake, false);
-    const f_T_traction = f_F_traction.cross(car_dir).y;
+    const f_T_traction = 0.5 * f_F_traction.cross(car_dir).y;
     
     const T_net = f_T_traction - r_T_traction;
     const I_net = T_net / I_car;
@@ -507,15 +497,8 @@ class car_t {
     this.wheel_rear.draw(r_a, 0.2, this.rot);
     this.wheel_rear.draw(r_b, 0.2, this.rot);
     
-    const vel_dir = this.vel.rotate_y(-this.rot);
-    if (vel_dir.z < 0) {
-      vel_dir.x *= -1;
-      vel_dir.z *= -1;
-    }
-    const vel_rot = Math.atan2(-vel_dir.x, vel_dir.z);
-    
-    this.wheel_front.draw(f_a, 0.2, this.rot + vel_rot * 0.5);
-    this.wheel_front.draw(f_b, 0.2, this.rot + vel_rot * 0.5);
+    this.wheel_front.draw(f_a, 0.2, this.rot);
+    this.wheel_front.draw(f_b, 0.2, this.rot);
     
     pen3d.line(r_a, r_b);
     pen3d.line(f_a, f_b);
@@ -526,7 +509,7 @@ class car_t {
 };
 
 let car = new car_t();
-let fn_draw_track = draw_drag;
+let fn_draw_track = draw_track;
 let scene_model = [];
 
 function draw_track()
@@ -595,12 +578,15 @@ function update()
   if (input.get_key(key.code("R")))
     car = new car_t();
   
+  /*
   if (input.get_key(key.code("A")))
     car.steer(+0.02);
   if (input.get_key(key.code("D")))
     car.steer(-0.02);
+  */
+  car.wheel_front.dir = -input.get_mouse_pos().x * 0.3;
   
-  const throttle = input.get_key(key.code("W")) ? 2.0 : 0;
+  const throttle = input.get_key(key.code("W")) ? 0.9 : 0;
   const handbrake = input.get_key(key.code(" "));
   const brake = input.get_key(key.code("S"));
   

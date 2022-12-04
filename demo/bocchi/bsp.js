@@ -15,7 +15,7 @@ const pen3d = new pen3d_t(pen, camera);
 const input = new input_t(canvas);
 
 const TIMESTEP = 0.015;
-const DOT_DEGREE = 0.01;
+const DOT_DEGREE = 0.1;
 const MIN_SLOPE = 0.8;
 const FRICTION = 10.0;
 const GRAVITY = 19;
@@ -65,6 +65,7 @@ class sphere_t {
     this.vel = new vec3_t();
     this.radius = radius;
     this.on_ground = false;
+    this.hull = new hull_t(this.pos, [ new vec3_t(0, -1, 0), new vec3_t() ], radius);
   }
 
   apply_gravity()
@@ -75,6 +76,7 @@ class sphere_t {
   integrate()
   {
     this.pos = this.pos.add(this.vel.mulf(TIMESTEP));
+    this.hull.pos = this.pos;
   }
 
   accelerate(wish_dir, accel, wish_speed)
@@ -155,6 +157,30 @@ class sphere_t {
 };
 
 const sphere = new sphere_t(new vec3_t(1, 4, 0), 0.5);
+let cube_hull;
+
+obj_load("cube.obj", (model) => {
+  const vertices = [];
+  for (const mesh of model.meshes) {
+    for (const face of mesh.faces) {
+      for (const v1 of face.vertices) {
+        let unique = true;
+        for (const v2 of vertices) {
+          const d_v = v2.sub(v1);
+          if (d_v.dot(d_v) < 0.001) {
+            unique = false;
+            break;
+          }
+        }
+        
+        if (unique)
+          vertices.push(v1);
+      }
+    }
+  }
+  
+  cube_hull = new hull_t(new vec3_t(), vertices, 0.0);
+});
 
 obj_load("bsp.obj", (model) => {
   mdl = model;
@@ -192,32 +218,83 @@ function clip_sphere_bsp_R(sphere, node, clip_nodes, min_dist, min_node)
   }
 }
 
+function clip_hull_bsp_R(hull, node, clip_nodes, min_dist, min_node)
+{
+  if (!node)
+    return;
+  
+  const max_d = hull.furthest_in(node.plane.normal).dot(node.plane.normal) - node.plane.distance + hull.radius;
+  const min_d = hull.furthest_in(node.plane.normal.mulf(-1)).dot(node.plane.normal) - node.plane.distance - hull.radius;
+  
+  if (max_d > 0)
+    clip_hull_bsp_R(hull, node.ahead, clip_nodes, min_dist, min_node);
+  
+  if (min_d < 0) {
+    if (min_d > min_dist) {
+      min_dist = min_d;
+      min_node = node;
+    }
+    
+    if (!node.behind)
+      clip_nodes.push(min_node);
+    
+    clip_hull_bsp_R(hull, node.behind, clip_nodes, min_dist, min_node);
+  }
+}
+
 function collapse_brush_R(brush)
 {
   if (!brush)
     return;
   
-  let plane = face_to_plane(brush.faces[0]);
-  let [behind, faces, ahead] = split_brush(brush, plane);
+  let plane = best_split_plane(brush);
   
-  for (let i = 1; i < brush.faces.length; i++) {
-    const test_plane = face_to_plane(brush.faces[i]);
-    const [test_behind, test_faces, test_ahead] = split_brush(brush, test_plane);
-    
-    if (test_ahead) {
-      plane = test_plane;
-      behind = test_behind;
-      faces = test_faces;
-      ahead = test_ahead;
-      break;
-    }
-  }
+  if (!plane)
+    return;
+  
+  let [behind, faces, ahead] = split_brush(brush, plane);
   
   const node = new bsp_node_t(plane, faces);
   node.behind = collapse_brush_R(behind);
   node.ahead = collapse_brush_R(ahead);
   
   return node;
+}
+
+function best_split_plane(brush)
+{
+  let best_plane;
+  let best_score = DOT_DEGREE;
+  
+  for (const face of brush.faces) {
+    const plane = face_to_plane(face);
+    const plane_score = calc_plane_score(plane, brush);
+    if (plane_score > best_score) {
+      best_plane = plane;
+      best_score = plane_score;
+    }
+  }
+  
+  return best_plane;
+}
+
+function calc_plane_score(plane, brush)
+{
+  let score = 0;
+  
+  const [ behind, faces, ahead ] = split_brush(brush, plane);
+  
+  for (const face of faces) {
+    const ab = face.vertices[1].sub(face.vertices[0]);
+    const ac = face.vertices[2].sub(face.vertices[0]);
+    
+    score += 0.5 * ab.cross(ac).length();
+  }
+  
+  if (ahead)
+    score += 100000;
+  
+  return score;
 }
 
 function face_to_plane(face)
@@ -333,14 +410,13 @@ function split_face(face, plane)
 function clip_bsp(sphere, bsp)
 {
   const clip_nodes = [];
-  clip_sphere_bsp_R(sphere, bsp, clip_nodes, -1000, null);
+  clip_hull_bsp_R(sphere.hull, bsp, clip_nodes, -1000, null);
   
   sphere.on_ground = false;
   for (const clip_node of clip_nodes) {
-    const hull_a = new hull_t(clip_node.vertices, 0.0);
-    const hull_b = new hull_t([ sphere.pos.add(new vec3_t(0, -1, 0)), sphere.pos ], sphere.radius);
+    const hull_a = new hull_t(new vec3_t(), clip_node.vertices, 0.0);
     
-    const [normal, depth] = clip_gjk(hull_a, hull_b);
+    const [normal, depth] = clip_gjk(hull_a, sphere.hull);
     if (normal) {
       const beta = depth * 0.1 / TIMESTEP;
       const lambda = -(sphere.vel.dot(normal) + beta);
@@ -358,9 +434,52 @@ function clip_bsp(sphere, bsp)
   }
 }
 
+function clip_bsp_2(hull, bsp)
+{
+  const clip_nodes = [];
+  clip_hull_bsp_R(hull, bsp, clip_nodes, -1000, null);
+  
+  for (const clip_node of clip_nodes) {
+    const hull_a = new hull_t(new vec3_t(), clip_node.vertices, 0.0);
+    
+    const [normal, depth] = clip_gjk(hull_a, hull);
+    if (normal)
+      cube_hull.pos = cube_hull.pos.add(normal.mulf(depth + 0.01));
+    
+    draw_bsp(clip_node);
+  }
+}
+
+function grab_cube()
+{
+  if (input.get_mouse_down()) {
+    const front_offset = new vec3_t(0, 0, 5).rotate_zxy(camera.rot);
+    cube_hull.pos = cube_hull.pos.add(camera.pos.add(front_offset).sub(cube_hull.pos).mulf(TIMESTEP * 4));
+    if (input.get_key(key.code("J")))
+      cube_hull.rotate_x(0.01);
+    if (input.get_key(key.code("K")))
+      cube_hull.rotate_y(0.01);
+    if (input.get_key(key.code("L")))
+      cube_hull.rotate_z(0.01);
+  }
+}
+
+function draw_hull(hull)
+{
+  for (let i = 0; i < hull.vertex_count(); i++) {
+    pen3d.circle(hull.get_vertex(i), 0.05);
+  }
+  
+  for (let i = 0; i < hull.vertex_count(); i++) {
+    for (let j = i + 1; j < hull.vertex_count(); j++)
+      pen3d.line(hull.get_vertex(i), hull.get_vertex(j));
+  }
+}
+
 function update()
 {
   free_look();
+  grab_cube();
   sphere.walk_move();
   sphere.apply_gravity();
   sphere.integrate();
@@ -370,11 +489,13 @@ function update()
   pen.begin();
   pen.color("black");
     draw_bsp_R(bsp);
+    draw_hull(cube_hull);
   pen.stroke();
   
   pen.begin();
   pen.color("red");
-  clip_bsp(sphere, bsp);
+    clip_bsp(sphere, bsp);
+    clip_bsp_2(cube_hull, bsp);
   pen.stroke();
   
   camera.pos = sphere.pos;

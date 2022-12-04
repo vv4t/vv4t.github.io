@@ -282,21 +282,41 @@ function support(shape_a, shape_b, d)
 }
 
 export class hull_t {
-  constructor(vertices, radius)
+  constructor(pos, vertices, radius)
   {
+    this.pos = pos;
     this.vertices = vertices;
     this.radius = radius;
   }
   
   get_vertex(i)
   {
-    return this.vertices[i];
+    return this.vertices[i].add(this.pos);
   }
   
   vertex_count()
   {
     return this.vertices.length;
   }
+  
+  // TMP
+    rotate_x(theta)
+    {
+      for (let i = 0; i < this.vertices.length; i++)
+        this.vertices[i] = this.vertices[i].rotate_x(theta);
+    }
+    
+    rotate_y(theta)
+    {
+      for (let i = 0; i < this.vertices.length; i++)
+        this.vertices[i] = this.vertices[i].rotate_y(theta);
+    }
+    
+    rotate_z(theta)
+    {
+      for (let i = 0; i < this.vertices.length; i++)
+        this.vertices[i] = this.vertices[i].rotate_z(theta);
+    }
   
   furthest_in(d)
   {
