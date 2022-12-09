@@ -28,12 +28,11 @@ class bob_t {
   }
 };
 
-const sphere_arr = [];
 const bob_arr = [];
 
 function get_C()
 {
-  return c_range.value * 0.5;
+  return c_range.value * 0.1;
 }
 
 function start()
@@ -48,9 +47,6 @@ function update()
   
   free_move();
   free_look();
-  
-  for (const sphere of sphere_arr)
-    sphere.update();
   
   if (input.get_key(key.code(" "))) {
     const front_offset = new vec3_t(0, 0, 5).rotate_zxy(camera.rot);
@@ -101,9 +97,6 @@ function update()
     }
   }
   
-  for (const sphere of sphere_arr)
-    sphere.draw();
-
   pen.stroke();
 }
 
@@ -120,7 +113,7 @@ function free_move()
   if (input.get_key(key.code("D")))
     move_dir = move_dir.add(new vec3_t(+1, 0, 0));
   
-  camera.pos = camera.pos.add(move_dir.rotate_zxy(camera.rot).mulf(5 * TIMESTEP));
+  camera.pos = camera.pos.add(move_dir.rotate_zxy(camera.rot).mulf(15 * TIMESTEP));
 }
 
 function free_look()
@@ -137,12 +130,6 @@ function free_look()
 
 function reset()
 {
-  sphere_arr.length = 0;
-  for (let i = 0; i < 4; i++) {
-    const pos = new vec3_t((rand() + 0.5) * BOB_NUM, 3, (rand() + 0.5) * BOB_NUM);
-    sphere_arr.push(new sphere_t(pos, new vec3_t()));
-  }
-  
   bob_arr.length = 0;
   
   for (let i = 0; i < BOB_NUM; i++) {
