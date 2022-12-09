@@ -53,12 +53,15 @@ function update()
     sphere.update();
   
   if (input.get_key(key.code(" "))) {
+    const front_offset = new vec3_t(0, 0, 5).rotate_zxy(camera.rot);
+    const front_pos = camera.pos.add(front_offset);
+    
     for (let i = -2; i <= 2; i++) {
       for (let j = -2; j <= 2; j++) {
-        const x = clamp(Math.floor(camera.pos.x + i), 1, BOB_NUM - 2);
-        const y = clamp(Math.floor(camera.pos.z + j), 1, BOB_NUM - 2);
+        const x = clamp(Math.floor(front_pos.x + i), 1, BOB_NUM - 2);
+        const y = clamp(Math.floor(front_pos.z + j), 1, BOB_NUM - 2);
         
-        bob_arr[y][x].u = camera.pos.y;
+        bob_arr[y][x].u = front_pos.y;
       }
     }
   }
