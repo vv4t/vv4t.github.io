@@ -212,8 +212,8 @@ class wheel_t {
   {
     this.dir = clamp(this.dir, -Math.PI / 2, +Math.PI / 2);
     
-    const C_t = 8000;
-    const C_a = 8000;
+    const C_t = 9000;
+    const C_a = 9000;
     
     const mu = 1.0;
     const F_max = mu * weight;
@@ -228,8 +228,8 @@ class wheel_t {
     this.slip_ratio = (spin_vel - move_vel) / Math.max(abs_move_vel, 5);
     this.slip_angle = perp_wheel_dir.dot(car_vel) / Math.max(1, car_vel.length());
     
-    const F_lateral = -clamp(C_a * this.slip_angle, -5000, 5000);
-    const F_traction = clamp(C_t * this.slip_ratio, -F_max, F_max);
+    const F_lateral = -clamp(C_a * this.slip_angle, -70000, 70000);
+    const F_traction = clamp(C_t * this.slip_ratio, -70000, 70000);
     
     const T_traction = F_traction * WHEEL_RADIUS;
     const T_total = T_drive - T_traction - T_brake;
@@ -244,7 +244,7 @@ class wheel_t {
       this.rot += this.rot_vel * TIMESTEP;
     }
     
-    return wheel_dir.mulf(F_traction).add(perp_wheel_dir.mulf(F_lateral * Math.cos(this.dir)));
+    return wheel_dir.mulf(F_traction).add(perp_wheel_dir.mulf(F_lateral));
   }
   
   draw(pos, radius, car_rot)
@@ -578,13 +578,13 @@ function update()
   if (input.get_key(key.code("R")))
     car = new car_t();
   
-  /*
+  
   if (input.get_key(key.code("A")))
     car.steer(+0.02);
   if (input.get_key(key.code("D")))
     car.steer(-0.02);
-  */
-  car.wheel_front.dir = -input.get_mouse_pos().x * 0.3;
+  
+  car.wheel_front.dir = -input.get_mouse_pos().x * 0.1;
   
   const throttle = input.get_key(key.code("W")) ? 0.9 : 0;
   const handbrake = input.get_key(key.code(" "));

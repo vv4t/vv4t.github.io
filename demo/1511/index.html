@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <link href="style.css" rel="stylesheet"></link>
+  </head>
+  <body>
+    <h1>LINKED LISTS</h1>
+    <div class="d-flex">
+      <div class="left">
+        <span>TOOLS</span>
+        <br>
+        <br>
+        <button id="new_list">    <pre>struct node *list;           // make a new list</pre></button>
+        <button id="new_ball">    <pre>malloc(sizeof(struct node)); // make a new node</pre></button>
+        <button id="free_ball">   <pre>free(node);                  // remove a new node</pre></button>
+        <button id="new_link">    <pre>parent->next = node;         // connect two nodes</pre></button>
+        <button id="point_list">  <pre>list = node;                 // point list to a node</pre></button>
+        <br>
+        <br>
+        <div id="lists"></div>
+      </div>
+      <div class="middle">
+        <canvas width="800" height="600" id="display"></canvas>
+      </div>
+      <div class="right">
+        <select name="code_select" id="code_select">
+          <option value="intro">Introduction</option>
+        </select>
+        <textarea class="code">
+// This website showcases a live visual
+// demonstration of how linked lists work.
+//
+// Each colored circle represents a node allocation
+// on the heap. The arrows represent pointers which
+// point each node to the next.  The fixed static
+// black circles are locally declared list pointers.
+// These are generally allocated on the stack and
+// may not only point to a single allocated node
+// within its span.
+//
+// On the left hand side is a variety of buttons
+// which perform fundamental operations on linked
+// lists.
+//
+// > struct node *list;
+// This creates a new linked list which will show
+// below the tool buttons. You can create a maximum
+// of 9 lists.  Each list can be set using the 'list
+// = node;' tool.  Note how it's not the linked list
+// which holds the data, but the nodes which it
+// point to
+//
+// > malloc(sizeof(struct node));
+// This creates a new node in memory in "random"
+// position. Take note of how when pointers change,
+// some nodes show up on the list or become
+// isolated.
+//
+// > free(node);
+// Notice how when pointers change, some nodes
+// become isolated.  When performing linked list
+// operations, there is the danger of allocating
+// memory which is not later freed. As more memory
+// is allocated without being freed, unreferenced
+// memory starts to add and waste space in general.
+        </textarea>
+      </div>
+    </div>
+    <script src="main.js" type="module"></script>
+  </body>
+</html>
