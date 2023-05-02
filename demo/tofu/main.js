@@ -373,9 +373,9 @@ class car_t {
       this.clutch_rpm = this.wheel_rear.rot_vel;
     }
     
-    const r_vel = this.vel.add(new vec3_t(this.rot_vel * 0.51, 0, 0).rotate_y(this.rot));
+    const r_vel = this.vel.add(new vec3_t(this.rot_vel * 0.5, 0, 0).rotate_y(this.rot));
     const r_F_traction = this.wheel_rear.apply_traction(r_vel, this.rot, W_r, T_drive, T_brake, handbrake);
-    const r_T_traction = 0.51 * r_F_traction.cross(car_dir).y;
+    const r_T_traction = 0.5 * r_F_traction.cross(car_dir).y;
     
     const f_vel = this.vel.add(new vec3_t(-this.rot_vel * 0.5, 0, 0).rotate_y(this.rot));
     const f_F_traction = this.wheel_front.apply_traction(f_vel, this.rot, W_f, 0, f_T_brake, false);
