@@ -21,7 +21,7 @@ export class input_t {
     this.canvas = canvas;
     this.key_state = {};
     this.binds = {};
-    this.mouse_state = false;
+    this.mouse_state = {};
     this.mouse_pos = new vec2_t();
     canvas.addEventListener("mousemove", (e) => {
       if (this.lock_status()) {
@@ -32,10 +32,13 @@ export class input_t {
       }
     });
     canvas.addEventListener("mousedown", (e) => {
-      this.mouse_state = true;
+      this.mouse_state[e.button] = true;
     });
     canvas.addEventListener("mouseup", (e) => {
-      this.mouse_state = false;
+      this.mouse_state[e.button] = false;
+    });
+    canvas.addEventListener("contextmenu", (e) => {
+      e.preventDefault();
     });
     document.addEventListener("wheel", (e) => {
       if (e.deltaY > 0) {
@@ -95,9 +98,11 @@ export class input_t {
       return false;
   }
   
-  get_mouse_down()
+  get_mouse_down(button)
   {
-    return this.mouse_state;
+    if (!button)
+      return this.mouse_state[0];
+    return this.mouse_state[button];
   }
   
   lock()
