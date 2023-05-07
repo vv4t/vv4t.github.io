@@ -416,6 +416,20 @@ function integrate_motion(dt)
 
 display_lists();
 
+const code_select = document.getElementById("code_select");
+const options = {
+  "intro": document.getElementById("intro"),
+  "nth_delete": document.getElementById("nth_delete")
+};
+
+code_select.addEventListener("change", (e) => {
+  for (const e in options) {
+    options[e].hidden = true;
+  }
+  
+  options[code_select.value].hidden = false;
+});
+
 setInterval(function() {
   update();
 }, 0.015 * 1000);
