@@ -139,6 +139,25 @@ function reset()
     
     bob_arr.push(row);
   }
+  
+  for (let i = 10; i < 30; i++) {
+    for (let j = 10; j < 30; j++) {
+      const x = i - 20;
+      const y = j - 20;
+      
+      const t = Math.sqrt(x*x + y*y);
+      
+      if (t > 10)
+        continue;
+      
+      const theta = t / 10 * Math.PI;
+      
+      bob_arr[i][j].u = 4 * Math.sin(theta);
+      bob_arr[i][j].u_t = 4 * Math.cos(theta);
+    }
+  }
+  
+  stop = true;
 }
 
 class sphere_t {

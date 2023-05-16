@@ -26,9 +26,35 @@ function reset_bob() {
   bob_arr.length = 0;
   for (let i = 0; i < BOB_NUM; i++)
     bob_arr.push(new bob_t(0.0, 0.0));
+  
+  for (let i = 1; i < BOB_NUM / 2; i++) {
+    const theta = i / (BOB_NUM / 2) * Math.PI;
+    
+    const sine = Math.sin(theta) * 0.4;
+    const sine1 = Math.sin(3*theta) / 3 * 0.4;
+    const sine2 = Math.sin(5*theta) / 5 * 0.4;
+    const sine3 = Math.sin(7*theta) / 7 * 0.4;
+    
+    const cosine = Math.cos(theta) * 0.4;
+    const cosine1 = Math.cos(3*theta)/3 * 0.4;
+    const cosine2 = Math.cos(5*theta)/5 * 0.4;
+    const cosine3 = Math.cos(7*theta)/7 * 0.4;
+    
+    const u = sine + sine1 + sine2 + sine3;
+    const u_t = -(cosine + cosine1 + cosine2 + cosine3);
+    
+    bob_arr[i].u = u;
+    bob_arr[i].u_t = u_t;
+  }
+  /*
+  for (let i = 1; i < BOB_NUM / 2; i++) {
+    bob_arr[i].u = 0.5;
+    bob_arr[i].u_t = -0.4;
+  }
+  */
+  
+  // stop = true;
 }
-
-reset_bob();
 
 const TIMESTEP = 0.015;
 
@@ -46,6 +72,8 @@ document.getElementById("start").addEventListener("click", () => {
 document.getElementById("reset").addEventListener("click", reset_bob);
 
 const c_range = document.getElementById("c");
+
+reset_bob();
 
 setInterval(function() {
   t += TIMESTEP;

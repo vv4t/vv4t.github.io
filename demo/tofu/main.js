@@ -531,10 +531,10 @@ function draw_drag()
 
 function orient_cam()
 {
-  const vel_dir = car.vel.normalize().add(new vec3_t(0, 0, 2.0).rotate_y(car.rot));
+  const vel_dir = car.vel.normalize().add(new vec3_t(0, 0, 10.0).rotate_y(car.rot));
   camera.rot.y = Math.atan2(-vel_dir.x, vel_dir.z);
-  camera.rot.x = 0.1;
-  camera.pos = car.pos.add(new vec3_t(0, 2, -4.5).rotate_y(camera.rot.y));
+  camera.rot.x = 0.01;
+  camera.pos = car.pos.add(new vec3_t(0, 1.2, -2.8).rotate_y(camera.rot.y));
 }
 
 function draw_mesh(mesh)
