@@ -13,7 +13,7 @@ const pen3d = new pen3d_t(pen, camera);
 const input = new input_t(canvas);
 
 const TIMESTEP = 0.015;
-const BOB_NUM = 50;
+const BOB_NUM = 100;
 const RADIUS = 1.0;
 
 const c_range = document.getElementById("c");
@@ -58,6 +58,7 @@ function update()
         const y = clamp(Math.floor(front_pos.z + j), 1, BOB_NUM - 2);
         
         bob_arr[y][x].u = front_pos.y;
+        bob_arr[y][x].u_t = front_pos.y;
       }
     }
   }
@@ -65,23 +66,33 @@ function update()
   if (!stop) {
     for (let y = 1; y < BOB_NUM - 1; y++) {
       for (let x = 1; x < BOB_NUM - 1; x++) {
-        const du_dx_1 = bob_arr[y][x].u - bob_arr[y][x - 1].u;
-        const du_dy_1 = bob_arr[y][x].u - bob_arr[y - 1][x].u;
+        const u = bob_arr[y][x].u;
+        const u_t = bob_arr[y][x].u_t;
         
-        const du_dx_2 = bob_arr[y][x + 1].u - bob_arr[y][x].u;
-        const du_dy_2 = bob_arr[y + 1][x].u - bob_arr[y][x].u;
+        const du_dx_1 = u - bob_arr[y][x - 1].u;
+        const du_dy_1 = u - bob_arr[y - 1][x].u;
+        
+        const du_dx_2 = bob_arr[y][x + 1].u - u;
+        const du_dy_2 = bob_arr[y + 1][x].u - u;
         
         const d2u_dx2 = du_dx_2 - du_dx_1;
         const d2u_dy2 = du_dy_2 - du_dy_1;
         
-        bob_arr[y][x].u_t += get_C() * (d2u_dx2 + d2u_dy2) * TIMESTEP;
-        bob_arr[y][x].u_t *= 0.999;
+        const d_t = 0.015;
+        
+        const d2u_dt2 = 14.0 * (d2u_dx2 + d2u_dy2);
+        
+        const u_0 = 2 * u - u_t + d2u_dt2 * d_t * d_t;
+        
+        bob_arr[y][x].u = u_0;
+        bob_arr[y][x].u_t = u;
       }
     }
-    
+    /*
     for (const row of bob_arr)
       for (const bob of row)
         bob.u += bob.u_t * TIMESTEP;
+    */
   }
   
   for (let y = 0; y < BOB_NUM - 1; y++) {
@@ -91,7 +102,7 @@ function update()
       const c = new vec3_t(x, bob_arr[y + 1][x].u, y + 1);
       const d = new vec3_t(x + 1, bob_arr[y + 1][x + 1].u, y + 1);
       
-      pen3d.circle(a, 0.1);
+      // pen3d.circle(a, 0.1);
       pen3d.line(a, b);
       pen3d.line(a, c);
     }
@@ -139,7 +150,7 @@ function reset()
     
     bob_arr.push(row);
   }
-  
+  return;
   for (let i = 10; i < 30; i++) {
     for (let j = 10; j < 30; j++) {
       const x = i - 20;
