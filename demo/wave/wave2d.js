@@ -16,6 +16,12 @@ const TIMESTEP = 0.015;
 const BOB_NUM = 100;
 const RADIUS = 1.0;
 
+const c = 0.7;
+const h = 0.1;
+const k = 0.015;
+
+const tau = Math.pow((c*k)/h,2);
+
 const c_range = document.getElementById("c");
 
 let stop = false;
@@ -25,6 +31,7 @@ class bob_t {
   {
     this.u = u;
     this.u_t = u_t;
+    this.u_0 = u;
   }
 };
 
@@ -80,27 +87,29 @@ function update()
         
         const d_t = 0.015;
         
-        const d2u_dt2 = 14.0 * (d2u_dx2 + d2u_dy2);
+        const d2u_dt2 = (d2u_dx2 + d2u_dy2);
         
-        const u_0 = 2 * u - u_t + d2u_dt2 * d_t * d_t;
+        const u_0 = 2 * u - u_t + tau * d2u_dt2;
         
-        bob_arr[y][x].u = u_0;
-        bob_arr[y][x].u_t = u;
+        bob_arr[y][x].u_0 = u_0;
       }
     }
-    /*
-    for (const row of bob_arr)
-      for (const bob of row)
-        bob.u += bob.u_t * TIMESTEP;
-    */
+    
+    for (const row of bob_arr) {
+      for (const bob of row) {
+        bob.u_t = bob.u;
+        bob.u = bob.u_0;
+      }
+    }
   }
   
   for (let y = 0; y < BOB_NUM - 1; y++) {
     for (let x = 0; x < BOB_NUM - 1; x++) {
-      const a = new vec3_t(x, bob_arr[y][x].u, y);
-      const b = new vec3_t(x + 1, bob_arr[y][x + 1].u, y);
-      const c = new vec3_t(x, bob_arr[y + 1][x].u, y + 1);
-      const d = new vec3_t(x + 1, bob_arr[y + 1][x + 1].u, y + 1);
+      const s = 10;
+      const a = new vec3_t(x, bob_arr[y][x].u*s, y);
+      const b = new vec3_t(x + 1, bob_arr[y][x + 1].u*s, y);
+      const c = new vec3_t(x, bob_arr[y + 1][x].u*s, y + 1);
+      const d = new vec3_t(x + 1, bob_arr[y + 1][x + 1].u*s, y + 1);
       
       // pen3d.circle(a, 0.1);
       pen3d.line(a, b);
@@ -150,21 +159,28 @@ function reset()
     
     bob_arr.push(row);
   }
-  return;
-  for (let i = 10; i < 30; i++) {
-    for (let j = 10; j < 30; j++) {
-      const x = i - 20;
-      const y = j - 20;
+  
+  const n = 30;
+  
+  for (let i = 0; i < n*2; i++) {
+    for (let j = 0; j < n*2; j++) {
+      const x = i - n;
+      const y = j - n;
       
       const t = Math.sqrt(x*x + y*y);
       
-      if (t > 10)
+      if (t < 5 || t > n)
         continue;
       
-      const theta = t / 10 * Math.PI;
+      const theta = (t - 5) / (n-5) * Math.PI;
       
-      bob_arr[i][j].u = 4 * Math.sin(theta);
-      bob_arr[i][j].u_t = 4 * Math.cos(theta);
+      const u = 0.6 * Math.sin(theta);
+      const u_t = -0.6 * Math.cos(theta) / n * Math.sqrt(c);
+      
+      const e = BOB_NUM/2 - n;
+      
+      bob_arr[i+e][j+e].u = u;
+      bob_arr[i+e][j+e].u_t = u + u_t * k;
     }
   }
   

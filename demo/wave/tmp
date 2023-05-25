@@ -13,7 +13,6 @@ class bob_t {
   {
     this.u = u;
     this.u_t = u_t;
-    this.u_0 = u;
   }
 };
 
@@ -28,31 +27,39 @@ function reset_bob() {
   for (let i = 0; i < BOB_NUM; i++)
     bob_arr.push(new bob_t(0.0, 0.0));
   
-  const n = 70;
+  const n = 300;
   
   for (let i = 1; i < n; i++) {
     const theta = (i - 1) / n * Math.PI;
     
     const sine = Math.sin(theta) * 0.3;
-    const cosine = Math.cos(theta) * 0.3 / n * 49 * Math.sqrt(c);
+    const cosine = Math.cos(theta) * 0.3 / n * 3 * Math.sqrt(c);
     
     const u = sine;
-    const u_t = cosine;
+    const u_t = -cosine;
     
     bob_arr[i].u = u;
-    bob_arr[i].u_t = u + u_t * k;
+    bob_arr[i].u_t = u_t;
   }
+  /*
+  for (let i = 1; i < BOB_NUM / 2; i++) {
+    bob_arr[i].u = 0.5;
+    bob_arr[i].u_t = -0.4;
+  }
+  */
   
   // stop = true;
 }
 
 const TIMESTEP = 0.015;
 
-const c = 2.7;
-const h = 0.1;
-const k = 0.015;
+const c = 100.0;
+const h = 1.0/BOB_NUM;
+const k = TIMESTEP;
 
 const tau = Math.pow((c*k)/h,2);
+
+// alert(tau);
 
 let t = 0.0;
 let stop = false;
@@ -85,23 +92,16 @@ setInterval(function() {
   
   if (!stop) {
     for (let i = 1; i < bob_arr.length - 1; i++) {
-      const u = bob_arr[i].u;
-      const u_t = bob_arr[i].u_t;
-      
-      const du_dx_1 = bob_arr[i + 1].u - u;
-      const du_dx_2 = u - bob_arr[i - 1].u;
+      const du_dx_1 = bob_arr[i + 1].u - bob_arr[i].u;
+      const du_dx_2 = bob_arr[i].u - bob_arr[i - 1].u;
       
       const d2u_dx2 = du_dx_1 - du_dx_2;
       
-      const u_0 = 2 * u - u_t + tau * d2u_dx2;
-      
-      bob_arr[i].u_0 = u_0;
+      bob_arr[i].u_t += 100 * d2u_dx2 * k;
     }
     
-    for (const bob of bob_arr) {
-      bob.u_t = bob.u;
-      bob.u = bob.u_0;
-    }
+    for (const bob of bob_arr)
+      bob.u += bob.u_t * k;
   }
   
   for (let i = 0; i < bob_arr.length - 1; i++) {
