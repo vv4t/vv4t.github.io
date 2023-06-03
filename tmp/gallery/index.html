@@ -1,0 +1,62 @@
+<html>
+  <head>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        overflow: hidden;
+        background-color: black;
+        text-align: center;
+      }
+
+      canvas {
+        border: 1px solid;
+      }
+      
+      #bar {
+        left: 40%;
+        top: 47%;
+        width: 20%;
+        height: 2%;
+        border: 1px solid;
+        border-color: white;
+        position: absolute;
+      }
+      
+      #progress {
+        width: 0%;
+        height: 100%;
+        background-color: white;
+        position: absolute;
+      }
+      
+      #enter {
+        background-color: #000000;
+        border: 1px solid;
+        left: 40%;
+        top: 47%;
+        width: 20%;
+        border: 2px solid white;
+        border-radius: 20px;
+        position: absolute;
+        color: white;
+        font-size: 2em;
+      }
+      
+      #enter:hover {
+        border-color: #ff00ff;
+      }
+    </style>
+  </head>
+  <body>
+    <button id="enter" onclick="run()">Enter</button>
+    <div id="bar" style="visibility: hidden;">
+      <div id="progress"></div>
+    </div>
+    <canvas width="800" height="600" id="display" style="visibility: hidden;"></canvas>
+    <script src="src/play.js" type="module"></script>
+  </body>
+</html>

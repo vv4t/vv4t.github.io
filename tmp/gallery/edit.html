@@ -1,0 +1,42 @@
+<html>
+  <head>
+    <style>
+      body {
+        display: inline-flex;
+        font-family: "Arial";
+        font-size: 0.9em;
+      }
+      
+      canvas {
+        border: 1px solid;
+      }
+      
+      button {
+        width: 100%;
+      }
+      
+      input[type=text] {
+        width: 50%;
+      }
+      
+      .tools {
+        width: 200px;
+        height: 720px;
+        border: 1px solid;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas width="1280" height="720" id="display"></canvas>
+    <script src="src/edit.js" type="module"></script>
+    <div class="tools">
+      <input type="file" name="file" id="file" accept=".jpg, .jpeg, .png">
+      <canvas width="200" height="400" id="tool"></canvas>
+      <button id="delete_image">Delete Image</button>
+      <button id="save">Export</button>
+      <button onclick="document.getElementById('import').click();">Import</button>
+      <input id="collision" type="checkbox"><label>Collision</label>
+      <input style="visibility:hidden;"type="file" id="import" accept=".json">
+    </div>
+  </body>
+</html>
