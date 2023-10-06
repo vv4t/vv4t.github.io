@@ -1,1 +1,0 @@
-{"spr":"hospital","tsConfig":{"1":402653184}}
