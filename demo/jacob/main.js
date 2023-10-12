@@ -18,74 +18,61 @@ const TIMESTEP = 0.015;
 class hull_t {
   constructor(vertices)
   {
-    this.vertices = vertices;
+    this.vertices = vertices.slice();
+    this.pos = new vec2_t();
+    this.planes = [];
+    
+    this.make_planes();
   }
   
-  get(pos, rot, i)
+  make_planes()
   {
-    return this.vertices[i % this.vertices.length].rotate(rot).add(pos);
+    this.planes = [];
+    
+    for (let i = 0; i < this.vertices.length; i++) {
+      const a = this.vertices[i];
+      const b = this.vertices[(i + 1) % this.vertices.length];
+      
+      const n = a.sub(b).cross_up(1).normalize();
+      const d = a.dot(n);
+      
+      this.planes.push(new plane_t(n, d));
+    }
+  }
+  
+  move(v)
+  {
+    this.pos.x += v.x;
+    this.pos.y += v.y;
+    
+    this.vertices = this.vertices.map((vertex) => {
+      return vertex.add(v);
+    });
+    
+    this.make_planes();
+  }
+  
+  rotate(t)
+  {
+    this.vertices = this.vertices.map((vertex) => {
+      return vertex.sub(this.pos).rotate(t).add(this.pos);
+    });
+    
+    this.make_planes();
   }
   
   draw(pos, rot)
   {
     for (let i = 0; i < this.vertices.length; i++) {
-      const p1 = this.get(pos, rot, i);
-      const p2 = this.get(pos, rot, i+1);
+      const p1 = this.vertices[i];
+      const p2 = this.vertices[(i + 1) % this.vertices.length];
       
+      const n = p1.sub(p2).cross_up(1).normalize().mulf(0.02);
+      const m = p1.add(p2).mulf(0.5);
+      
+      pen.line(m, m.add(n));
       pen.line(p1, p2);
     }
-  }
-};
-
-class c_clip_static_t {
-  constructor(point, plane)
-  {
-    this.point = point;
-    this.plane = plane;
-  }
-  
-  get(T)
-  {
-    const pos = new vec2_t(T.get(0, 0), T.get(1, 0));
-    const rot = T.get(2, 0);
-    const p = pos.add(this.point.rotate(rot));
-    
-    return p.dot(this.plane.normal) - this.plane.distance;
-  }
-};
-
-class c_dist_dynm_t {
-  constructor(distance)
-  {
-    this.distance = distance;
-  }
-  
-  get(T)
-  {
-    const a = new vec2_t(T.get(0, 0), T.get(1, 0));
-    const b = new vec2_t(T.get(2, 0), T.get(3, 0));
-    
-    const delta = a.sub(b);
-    
-    return delta.length() - this.distance;
-  }
-};
-
-class c_dist_static_t {
-  constructor(point, distance)
-  {
-    this.point = point;
-    this.distance = distance;
-  }
-  
-  get(T)
-  {
-    const a = new vec2_t(T.get(0, 0), T.get(1, 0));
-    const b = this.point;
-    
-    const delta = a.sub(b);
-    
-    return delta.length() - this.distance;
   }
 };
 
@@ -108,11 +95,157 @@ class plane_t {
   }
 };
 
-class clip_t {
-  constructor(plane)
+class point_constraint_t {
+  constructor(body, point)
   {
-    this.points = [];
-    this.plane = plane;
+    this.body = body;
+    this.point = point;
+  }
+  
+  solve(beta)
+  {
+    const T = matrix_from([ [ this.body.pos.x, this.body.pos.y ] ]).transpose();
+    const dT = matrix_from([ [ this.body.vel.x, this.body.vel.y ] ]).transpose();
+    
+    const M = matrix_from([
+      [1, 0],
+      [0, 1],
+    ]);
+    
+    const C_x = {
+      get: (Cx_T) => {
+        return Cx_T.get(0, 0) - this.point.x;
+      }
+    };
+    
+    const C_y = {
+      get: (Cy_T) => {
+        return Cy_T.get(1, 0) - this.point.y;
+      }
+    };
+    
+    const [Jt, lambda] = solve([ C_x, C_y ], M, T, dT, beta);
+    
+    const F = Jt.mul(lambda);
+    
+    this.body.vel.x += F.get(0, 0);
+    this.body.vel.y += F.get(1, 0);
+  }
+};
+
+class contact_constraint_t {
+  constructor(a, b, contact)
+  {
+    this.a = a;
+    this.b = b;
+    this.contact = contact;
+    this.r1 = contact.p1.sub(a.pos);
+    this.r2 = contact.p2.sub(b.pos);
+    this.impulse = 0.0;
+  }
+  
+  get(T)
+  {
+    const pos1 = new vec2_t(T.get(0, 0), T.get(1, 0));
+    const rot1 = T.get(2, 0);
+    const p1 = pos1.add(this.r1.rotate(rot1));
+    
+    const pos2 = new vec2_t(T.get(3, 0), T.get(4, 0));
+    const rot2 = T.get(5, 0);
+    const p2 = pos2.add(this.r2.rotate(rot2));
+    
+    return p1.dot(this.contact.normal) - p2.dot(this.contact.normal);
+  }
+  
+  solve(beta)
+  {
+    const T = matrix_from([ [ this.a.pos.x, this.a.pos.y, 0.0, this.b.pos.x, this.b.pos.y, 0.0 ] ]).transpose();
+    const dT = matrix_from([ [ this.a.vel.x, this.a.vel.y, this.a.ang, this.b.vel.x, this.b.vel.y, this.b.ang ] ]).transpose();
+    
+    const I = 0.01;
+    
+    const M = matrix_from([
+      [1, 0, 0,   0, 0, 0  ],
+      [0, 1, 0,   0, 0, 0  ],
+      [0, 0, 1/I, 0, 0, 0  ],
+      [0, 0, 0,   1, 0, 0  ],
+      [0, 0, 0,   0, 1, 0  ],
+      [0, 0, 0,   0, 0, 1/I],
+    ]);
+    
+    const [Jt, lambda] = solve([ this ], M, T, dT, beta);
+    const delta = lambda.get(0, 0);
+    
+    const old_impulse = this.impulse;
+    this.impulse += delta;
+    this.impulse = Math.max(0, this.impulse);
+    lambda.set(0, 0, this.impulse - old_impulse);
+    
+    const F = Jt.mul(lambda);
+    
+    this.a.vel.x += F.get(0, 0);
+    this.a.vel.y += F.get(1, 0);
+    this.a.ang += F.get(2, 0) / I;
+    
+    this.b.vel.x += F.get(3, 0);
+    this.b.vel.y += F.get(4, 0);
+    this.b.ang += F.get(5, 0) / I;
+  }
+};
+
+class static_contact_constraint_t {
+  constructor(body, contact)
+  {
+    this.body = body;
+    this.contact = contact;
+    this.r1 = contact.p1.sub(body.pos);
+    this.impulse = 0.0;
+  }
+  
+  get(T)
+  {
+    const pos = new vec2_t(T.get(0, 0), T.get(1, 0));
+    const rot = T.get(2, 0);
+    const p1 = pos.add(this.r1.rotate(rot));
+    
+    return p1.dot(this.contact.normal) - this.contact.p2.dot(this.contact.normal);
+  }
+  
+  solve(beta)
+  {
+    const T = matrix_from([ [ this.body.pos.x, this.body.pos.y, 0.0 ] ]).transpose();
+    const dT = matrix_from([ [ this.body.vel.x, this.body.vel.y, this.body.ang ] ]).transpose();
+    
+    const I = 0.01;
+    
+    const M = matrix_from([
+      [1, 0, 0],
+      [0, 1, 0],
+      [0, 0, 1/I]
+    ]);
+    
+    const [Jt, lambda] = solve([ this ], M, T, dT, beta);
+    const delta = lambda.get(0, 0);
+    
+    const old_impulse = this.impulse;
+    this.impulse += delta;
+    this.impulse = Math.max(0.01, this.impulse);
+    lambda.set(0, 0, this.impulse - old_impulse);
+    
+    const F = Jt.mul(lambda);
+    
+    this.body.vel.x += F.get(0, 0);
+    this.body.vel.y += F.get(1, 0);
+    this.body.ang += F.get(2, 0) / I;
+  }
+};
+
+class contact_t {
+  constructor(normal, p1, p2)
+  {
+    this.normal = normal;
+    this.p1 = p1;
+    this.p2 = p2;
   }
 };
 
@@ -130,35 +263,103 @@ class body_t {
     this.old_pos = this.pos;
   }
   
-  clip_plane(plane)
+  rotate(t)
   {
-    const clip = new clip_t(plane);
+    this.rot += t;
+    this.hull.rotate(t);
+  }
+  
+  move(v)
+  {
+    this.pos = this.pos.add(v);
+    this.hull.move(v);
+  }
+  
+  check_point(point)
+  {
+    let min_depth = -100.0;
+    let min_plane = null;
+    let inside = true;
     
-    for (let i = 0; i < this.hull.vertices.length; i++) {
-      const p = this.hull.get(this.pos, this.rot, i);
-      const d = p.dot(plane.normal) - plane.distance;
+    for (const plane of this.hull.planes) {
+      const depth = point.dot(plane.normal) - plane.distance;
       
-      if (d < 0) {
-        clip.points.push(p);
+      if (depth > 0.1) {
+        inside = false;
+        break;
+      } else if (depth > min_depth){
+        min_depth = depth;
+        min_plane = plane;
       }
     }
     
-    if (clip.points.length === 0) {
+    if (inside) {
+      return min_plane;
+    } else {
       return null;
     }
+  }
+  
+  clip_plane(plane)
+  {
+    const contacts = [];
     
-    return clip;
+    for (const vertex of this.hull.vertices) {
+      const d = vertex.dot(plane.normal) - plane.distance;
+      
+      if (d < 0) {
+        const p1 = vertex;
+        const p2 = vertex.add(plane.normal.mulf(-plane.normal.dot(vertex) + plane.distance));
+        contacts.push(new contact_t(plane.normal, p1, p2));
+      }
+    }
+    
+    return contacts;
+  }
+  
+  clip_body(body)
+  {
+    const contacts = [];
+    
+    for (const vertex of body.hull.vertices) {
+      const plane = this.check_point(vertex);
+      
+      if (plane) {
+        const p1 = vertex.add(plane.normal.mulf(-plane.normal.dot(vertex) + plane.distance));
+        const p2 = vertex;
+        
+        contacts.push(new contact_t(plane.normal.mulf(-1), p1, p2)); 
+      }
+    }
+    
+    for (const vertex of this.hull.vertices) {
+      const plane = body.check_point(vertex);
+      
+      if (plane) {
+        const p1 = vertex;
+        const p2 = vertex.add(plane.normal.mulf(-plane.normal.dot(vertex) + plane.distance));
+        
+        contacts.push(new contact_t(plane.normal, p1, p2)); 
+      }
+    }
+    
+    return contacts;
   }
   
   integrate()
   {
     this.old_pos = this.pos.copy();
-    this.pos = this.pos.add(this.vel.mulf(TIMESTEP));
-    this.rot += this.ang * TIMESTEP;
+    
+    const delta_pos = this.vel.mulf(TIMESTEP);
+    const delta_rot = this.ang * TIMESTEP;
+    
+    this.move(delta_pos);
+    this.rotate(delta_rot);
   }
   
   back()
   {
+    this.hull.move(this.old_pos.sub(this.pos));
     this.pos = this.old_pos;
   }
   
@@ -168,15 +369,35 @@ class body_t {
   }
 };
 
-const square = new hull_t([
-  new vec2_t(-0.2, -0.05),
-  new vec2_t(-0.2, +0.05),
-  new vec2_t(+0.2, +0.05),
-  new vec2_t(+0.2, -0.05)
-]);
+const square = [
+  new vec2_t(-0.08, -0.05),
+  new vec2_t(-0.08, +0.05),
+  new vec2_t(+0.08, +0.05),
+  new vec2_t(+0.08, -0.05)
+];
 
-const body = new body_t(square);
-body.rot = Math.PI / 4.0;
+const bodies = Array.from({length: 8}, () => {
+  let p = new vec2_t(0, 0.1);
+  
+  /*
+  const random_hull = Array.from({length: 8}, () => {
+    const old_p = p.copy();
+    p = p.rotate(-Math.random());
+    return old_p;
+  });
+  */
+  
+  const s = 1.0 + Math.random();
+  
+  const random_hull = square.map((v) => {
+    return v.mulf(s)
+  });
+  
+  const body = new body_t(new hull_t(random_hull));
+  body.move(new vec2_t(Math.random(), Math.random()));
+  
+  return body;
+});
 
 const planes = [
   new plane_t(new vec2_t(0,1), -0.3),
@@ -184,55 +405,69 @@ const planes = [
   new plane_t(new vec2_t(-1,0), -0.9),
 ];
 
+let selected = null;
+
 function update()
 {
   pen.clear();
   pen.begin();
   
-  body.vel.y -= 0.1;
-  
-  if (input.get_mouse_down(0)) {
-    const delta = body.pos.sub(input.get_mouse_pos());
-    
-    body.vel.x -= delta.x * 0.4;
-    body.vel.y -= delta.y * 0.4;
-    body.ang += 0.01;
+  for (const body of bodies) {
+    body.vel.y -= 0.1;
   }
   
-  let collide = false;
+  const C = [];
   
-  for (let i = 0; i < 1; i++) {
-    for (const plane of planes) {
-      // body.integrate();
-      const clip = body.clip_plane(plane);
-      // body.back();
-      
-      if (clip) {
-        collide = true;
-        for (const point of clip.points) {
-          const C = [ new c_clip_static_t(point.sub(body.pos), clip.plane) ];
-          
-          const T = matrix_from([ [ body.pos.x, body.pos.y, 0.0 ] ]).transpose();
-          const dT = matrix_from([ [ body.vel.x, body.vel.y, body.ang ] ]).transpose();
-          
-          const F = solve(C, T, dT, 0.5);
-          
-          body.vel.x += F.get(0, 0);
-          body.vel.y += F.get(1, 0);
-          body.ang += F.get(2, 0) * 10;
+  if (input.get_mouse_down(0)) {
+    if (!selected) {
+      for (const body of bodies) {
+        if (body.check_point(input.get_mouse_pos())) {
+          selected = body;
         }
+      }
+    }
+  } else {
+    selected = null;
+  }
+  
+  if (selected) {
+    C.push(new point_constraint_t(selected, input.get_mouse_pos()));
+  }
+  
+  for (let i = 0; i < bodies.length; i++) {
+    for (let j = i + 1; j < bodies.length; j++) {
+      const contacts = bodies[i].clip_body(bodies[j]);
+      
+      for (const contact of contacts) {
+        C.push(new contact_constraint_t(bodies[i], bodies[j], contact));
       }
     }
   }
   
-  body.integrate();
-  
-  if (collide) {
-    body.vel = body.vel.mulf(0.9);
-    body.ang *= 0.99;
+  for (const body of bodies) {
+    for (const plane of planes) {
+      const contacts = body.clip_plane(plane);
+      
+      for (const contact of contacts) {
+        C.push(new static_contact_constraint_t(body, contact));
+      }
+    }
   }
   
-  body.draw();
+  for (let i = 0; i < 10; i++) {
+    for (const c of C) {
+      c.solve(0.25);
+    }
+  }
+  
+  for (const body of bodies) {
+    body.integrate();
+  }
+  
+  for (const body of bodies) {
+    body.draw();
+  }
+  
   
   for (const plane of planes) {
     plane.draw();
@@ -241,14 +476,8 @@ function update()
   pen.stroke();
 }
 
-function solve(C, T, dT, beta)
+function solve(C, M, T, dT, beta)
 {
-  const M = matrix_from([
-    [1, 0, 0],
-    [0, 1, 0],
-    [0, 0, 0.1]
-  ]);
-  
   const J = J_calc(C, T);
   const Jt = J.transpose();
   const Jv = J.mul(dT);
@@ -257,13 +486,7 @@ function solve(C, T, dT, beta)
   const bias = matrix_from(C.map((C_i) => [beta / TIMESTEP * C_i.get(T)]));
   const lambda = J_M_Jt.inverse().mul(Jv.add(bias).mulf(-1));
   
-  if (lambda.get(0,0) < 0) {
-    lambda.set(0,0, 0);
-  }
-  
-  const F = Jt.mul(lambda);
-  
-  return F;
+  return [Jt, lambda];
 }
 
 function J_calc(C, p)
