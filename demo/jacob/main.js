@@ -5,6 +5,7 @@ import { pen3d_t } from "../wire-3d/pen3d.js";
 import { input_t, key } from "../wire-3d/input.js";
 import { clamp, vec2_t, vec3_t } from "../wire-3d/math.js";
 import { camera_t } from "../wire-3d/camera.js";
+import { matrix_t, matrix_from } from "./matrix.js";
 
 const canvas = document.getElementById("canvas");
 const camera = new camera_t(new vec3_t(), new vec3_t());
@@ -14,307 +15,255 @@ const input = new input_t(canvas);
 
 const TIMESTEP = 0.015;
 
-function assert(cond)
-{
-  if (!cond)
-    console.error("assertion failed");
-}
-
-class matrix_t {
-  constructor(row, col)
+class hull_t {
+  constructor(vertices)
   {
-    this.row = row;
-    this.col = col;
-    this.m = new Float64Array(row * col);
+    this.vertices = vertices;
   }
   
-  get(i, j)
+  get(pos, rot, i)
   {
-    assert(i < this.row);
-    assert(j < this.col);
-    
-    return this.m[i * this.col + j];
+    return this.vertices[i % this.vertices.length].rotate(rot).add(pos);
   }
   
-  set(i, j, k)
+  draw(pos, rot)
   {
-    assert(i < this.row);
-    assert(j < this.col);
-    
-    this.m[i * this.col + j] = k;
-  }
-  
-  mul(M)
-  {
-    assert(this.col == M.row);
-    
-    const res = new matrix_t(this.row, M.col);
-    
-    for (let i = 0; i < res.row; i++) {
-      for (let j = 0; j < res.col; j++) {
-        let m_ij = 0;
-        
-        for (let k = 0; k < this.col; k++) {
-          m_ij += this.get(i, k) * M.get(k, j);
-        }
-        
-        res.set(i, j, m_ij);
-      }
+    for (let i = 0; i < this.vertices.length; i++) {
+      const p1 = this.get(pos, rot, i);
+      const p2 = this.get(pos, rot, i+1);
+      
+      pen.line(p1, p2);
     }
-    
-    return res;
-  }
-  
-  mulf(f)
-  {
-    const res = new matrix_t(this.row, this.col);
-    
-    for (let i = 0; i < res.row; i++) {
-      for (let j = 0; j < res.col; j++) {
-        res.set(i, j, this.get(i,j) * f);
-      }
-    }
-    
-    return res;
-  }
-  
-  add(M)
-  {
-    assert(this.row === M.row && this.col === M.col);
-    
-    const res = new matrix_t(this.row, this.col);
-    
-    for (let i = 0; i < this.row; i++) {
-      for (let j = 0; j < this.col; j++) {
-        res.set(i, j, this.get(i,j) + M.get(i,j));
-      }
-    }
-    
-    return res;
-  }
-  
-  transpose()
-  {
-    const res = new matrix_t(this.col, this.row);
-    
-    for (let i = 0; i < this.col; i++) {
-      for (let j = 0; j < this.row; j++) {
-        res.set(i, j, this.get(j,i));
-      }
-    }
-    
-    return res;
-  }
-  
-  copy()
-  {
-    const M = new matrix_t(this.row, this.col);
-    M.m = this.m.slice();
-    return M;
-  }
-  
-  inverse()
-  {
-    assert(this.row === this.col);
-    
-    const order = this.row;
-    
-    const aug = new matrix_t(order, 2*order);
-    
-    for (let i = 0; i < order; i++) {
-      for (let j = 0; j < order; j++) {
-        if (i == j) {
-          aug.set(i,order+j,1);
-        } else {
-          aug.set(i,order+j,0);
-        }
-        
-        aug.set(i,j, this.get(i,j));
-      }
-    }
-    
-    for (let i = this.row - 1; i >= 0; i--) {
-      if (aug.get(i-1,0) < aug.get(i,0)) {
-        aug.swap(i-1, i);
-      }
-    }
-    
-    for (let i = 0; i < order; i++) {
-      for (let j = 0; j < order; j++) {
-        if (j != i) {
-          const tmp = aug.get(j,i) / aug.get(i,i);
-          for (let k = 0; k < 2 * order; k++) {
-            aug.set(j,k, aug.get(j,k) - aug.get(i,k) * tmp);
-          }
-        }
-      }
-    }
-    
-    for (let i = 0; i < order; i++) {
-      const tmp = aug.get(i,i);
-      for (let j = 0; j < 2 * order; j++) {
-        aug.set(i,j, aug.get(i,j) / tmp);
-      }
-    }
-    
-    const M_inv = new matrix_t(order, order);
-    
-    for (let i = 0; i < order; i++) {
-      for (let j = 0; j < order; j++) {
-        M_inv.set(i,j, aug.get(i,j+order));
-      }
-    }
-    
-    return M_inv;
-  }
-  
-  swap(i,j)
-  {
-    for (let k = 0; k < this.col; k++) {
-      const tmp = this.get(i,k);
-      this.set(i,k, this.get(j,k));
-      this.set(j,k, tmp);
-    }
-  }
-  
-  print()
-  {
-    let string = `matrix<${this.row}, ${this.col}> {\n`;
-    
-    for (let i = 0; i < this.row; i++) {
-      for (let j = 0; j < this.col; j++) {
-        string += " " + this.get(i,j).toFixed(3);
-      }
-      string += "\n";
-    }
-    string += "}";
-    
-    console.log(string);
   }
 };
 
-function matrix_from(arr)
-{
-  const res = new matrix_t(arr.length, arr[0].length);
-  
-  for (let i = 0; i < res.row; i++) {
-    for (let j = 0; j < res.col; j++) {
-      res.set(i, j, arr[i][j]);
-    }
+class c_clip_static_t {
+  constructor(point, plane)
+  {
+    this.point = point;
+    this.plane = plane;
   }
   
-  return res;
-}
+  get(T)
+  {
+    const pos = new vec2_t(T.get(0, 0), T.get(1, 0));
+    const rot = T.get(2, 0);
+    const p = pos.add(this.point.rotate(rot));
+    
+    return p.dot(this.plane.normal) - this.plane.distance;
+  }
+};
 
-let T = new vec2_t(0.1, 0.1);
+class c_dist_dynm_t {
+  constructor(distance)
+  {
+    this.distance = distance;
+  }
+  
+  get(T)
+  {
+    const a = new vec2_t(T.get(0, 0), T.get(1, 0));
+    const b = new vec2_t(T.get(2, 0), T.get(3, 0));
+    
+    const delta = a.sub(b);
+    
+    return delta.length() - this.distance;
+  }
+};
 
-const B_n = 30;
-const B = Array.from({length: B_n}, () => Math.random());
-const dB = Array.from({length: B_n}, () => Math.random());
+class c_dist_static_t {
+  constructor(point, distance)
+  {
+    this.point = point;
+    this.distance = distance;
+  }
+  
+  get(T)
+  {
+    const a = new vec2_t(T.get(0, 0), T.get(1, 0));
+    const b = this.point;
+    
+    const delta = a.sub(b);
+    
+    return delta.length() - this.distance;
+  }
+};
 
-const R = 0.05;
+class plane_t {
+  constructor(normal, distance)
+  {
+    this.normal = normal;
+    this.distance = distance;
+  }
+  
+  draw()
+  {
+    const tangent = this.normal.cross_up(1.0);
+    const a = this.normal.mulf(this.distance);
+    const b = a.add(tangent);
+    const c = a.add(tangent.mulf(-1));
+    
+    pen.line(a, a.add(this.normal.mulf(0.05)));
+    pen.line(b, c);
+  }
+};
 
-const spots = [];
+class clip_t {
+  constructor(plane)
+  {
+    this.points = [];
+    this.plane = plane;
+  }
+};
+
+class body_t {
+  constructor(hull)
+  {
+    this.hull = hull;
+    
+    this.pos = new vec2_t();
+    this.rot = 0.0;
+    
+    this.vel = new vec2_t();
+    this.ang = 0.0;
+    
+    this.old_pos = this.pos;
+  }
+  
+  clip_plane(plane)
+  {
+    const clip = new clip_t(plane);
+    
+    for (let i = 0; i < this.hull.vertices.length; i++) {
+      const p = this.hull.get(this.pos, this.rot, i);
+      const d = p.dot(plane.normal) - plane.distance;
+      
+      if (d < 0) {
+        clip.points.push(p);
+      }
+    }
+    
+    if (clip.points.length === 0) {
+      return null;
+    }
+    
+    return clip;
+  }
+  
+  integrate()
+  {
+    this.old_pos = this.pos.copy();
+    this.pos = this.pos.add(this.vel.mulf(TIMESTEP));
+    this.rot += this.ang * TIMESTEP;
+  }
+  
+  back()
+  {
+    this.pos = this.old_pos;
+  }
+  
+  draw()
+  {
+    this.hull.draw(this.pos, this.rot);
+  }
+};
+
+const square = new hull_t([
+  new vec2_t(-0.2, -0.05),
+  new vec2_t(-0.2, +0.05),
+  new vec2_t(+0.2, +0.05),
+  new vec2_t(+0.2, -0.05)
+]);
+
+const body = new body_t(square);
+body.rot = Math.PI / 4.0;
+
+const planes = [
+  new plane_t(new vec2_t(0,1), -0.3),
+  new plane_t(new vec2_t(1,0), -0.9),
+  new plane_t(new vec2_t(-1,0), -0.9),
+];
 
 function update()
 {
-  T = input.get_mouse_pos();
-  
-  if (input.get_mouse_down(0)) {
-    spots.push(input.get_mouse_pos().copy());
-  }
-  
-  const C = [ C_4, C_5 ];
-  
-  const O = matrix_from([B]).transpose();
-  const dO = matrix_from([dB]).transpose();
-  
-  const J = J_calc(C, O);
-  const Jt = J.transpose();
-  const Jv = J.mul(dO);
-  const J_Jt = J.mul(Jt);
-  
-  const bias = matrix_from(C.map((C_i) => [60 * C_i(O)]));
-  const lambda = J_Jt.inverse().mul(Jv.add(bias).mulf(-1));
-  
-  const F = Jt.mul(lambda);
-    
-  for (let i = 0; i < B.length; i++) {
-    dB[i] += F.get(i,0);
-    dB[i] *= 0.9;
-    B[i] += dB[i] * 0.015;
-  }
-  
   pen.clear();
   pen.begin();
   
-  let p = new vec2_t();
-  for (let i = 0; i < B.length; i++) {
-    const t_n = new vec2_t(0, R).rotate(B[i]);
-    pen.circle(p, 0.01);
-    pen.line(p, p.add(t_n));
-    p = p.add(t_n);
+  body.vel.y -= 0.1;
+  
+  if (input.get_mouse_down(0)) {
+    const delta = body.pos.sub(input.get_mouse_pos());
+    
+    body.vel.x -= delta.x * 0.4;
+    body.vel.y -= delta.y * 0.4;
+    body.ang += 0.01;
   }
   
-  for (let i = 1; i < spots.length; i++) {
-    pen.line(spots[i-1], spots[i]);
+  let collide = false;
+  
+  for (let i = 0; i < 1; i++) {
+    for (const plane of planes) {
+      // body.integrate();
+      const clip = body.clip_plane(plane);
+      // body.back();
+      
+      if (clip) {
+        collide = true;
+        for (const point of clip.points) {
+          const C = [ new c_clip_static_t(point.sub(body.pos), clip.plane) ];
+          
+          const T = matrix_from([ [ body.pos.x, body.pos.y, 0.0 ] ]).transpose();
+          const dT = matrix_from([ [ body.vel.x, body.vel.y, body.ang ] ]).transpose();
+          
+          const F = solve(C, T, dT, 0.5);
+          
+          body.vel.x += F.get(0, 0);
+          body.vel.y += F.get(1, 0);
+          body.ang += F.get(2, 0) * 10;
+        }
+      }
+    }
   }
   
+  body.integrate();
+  
+  if (collide) {
+    body.vel = body.vel.mulf(0.9);
+    body.ang *= 0.99;
+  }
+  
+  body.draw();
+  
+  for (const plane of planes) {
+    plane.draw();
+  }
   
   pen.stroke();
 }
 
-function C_4(O)
+function solve(C, T, dT, beta)
 {
-  let p = new vec2_t();
+  const M = matrix_from([
+    [1, 0, 0],
+    [0, 1, 0],
+    [0, 0, 0.1]
+  ]);
   
-  for (let i = 0; i < O.row; i++) {
-    const t_n = new vec2_t(0, R).rotate(O.get(i,0));
-    p = p.add(t_n);
+  const J = J_calc(C, T);
+  const Jt = J.transpose();
+  const Jv = J.mul(dT);
+  const J_M_Jt = J.mul(M).mul(Jt);
+  
+  const bias = matrix_from(C.map((C_i) => [beta / TIMESTEP * C_i.get(T)]));
+  const lambda = J_M_Jt.inverse().mul(Jv.add(bias).mulf(-1));
+  
+  if (lambda.get(0,0) < 0) {
+    lambda.set(0,0, 0);
   }
   
-  const d = p.sub(T);
+  const F = Jt.mul(lambda);
   
-  return d.x;
-}
-
-function C_5(O)
-{
-  let p = new vec2_t();
-  for (let i = 0; i < O.row; i++) {
-    const t_n = new vec2_t(0, R).rotate(O.get(i,0));
-    p = p.add(t_n);
-  }
-  
-  const d = p.sub(T);
-  
-  return d.y;
-}
-
-function C_1(p)
-{
-  const pos = new vec2_t(p.get(0,0), p.get(1,0));
-  const pos2 = new vec2_t(p.get(2,0), p.get(3,0));
-  
-  const delta = pos2.sub(pos);
-  
-  return delta.length() - 0.5;
-}
-
-function C_2(p)
-{
-  const pos = new vec2_t(p.get(0,0), p.get(1,0));
-  const delta = pos.sub(T);
-  
-  return delta.length() - 0.5;
-}
-
-function C_3(p)
-{
-  const pos = new vec2_t(p.get(0,0), p.get(1,0));
-  const delta = pos.sub(T);
-  
-  return delta.y;
+  return F;
 }
 
 function J_calc(C, p)
@@ -324,13 +273,14 @@ function J_calc(C, p)
   const J = new matrix_t(C.length, p.row);
   
   for (let i = 0; i < C.length; i++) {
-    const C_p = C[i](p);
+    const C_p = C[i].get(p);
     
     for (let j = 0; j < p.row; j++) {
-      const p_j = p.copy();
-      p_j.set(j, 0, p_j.get(j,0) + h);
+      const p_j = p.get(j, 0);
       
-      const dC_dp_j = (C[i](p_j) - C_p) / h;
+      p.set(j, 0, p_j + h);
+      const dC_dp_j = (C[i].get(p) - C_p) / h;
+      p.set(j, 0, p_j);
       
       J.set(i, j, dC_dp_j);
     }

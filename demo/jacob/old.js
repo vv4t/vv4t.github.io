@@ -5,6 +5,7 @@ import { pen3d_t } from "../wire-3d/pen3d.js";
 import { input_t, key } from "../wire-3d/input.js";
 import { clamp, vec2_t, vec3_t } from "../wire-3d/math.js";
 import { camera_t } from "../wire-3d/camera.js";
+import { matrix_t, matrix_from } from "./matrix.js";
 
 const canvas = document.getElementById("canvas");
 const camera = new camera_t(new vec3_t(), new vec3_t());
@@ -16,69 +17,107 @@ const TIMESTEP = 0.015;
 
 let T = new vec2_t(0.1, 0.1);
 
-const O = [ 0, 0 ];
-const dO = [ 0, 0.1 ];
+const B_n = 8;
+const B = Array.from({length: B_n}, () => Math.random());
+const dB = Array.from({length: B_n}, () => Math.random());
+
+const R = 0.1;
 
 function update()
 {
   T = input.get_mouse_pos();
   
-  const C = C_1;
+  const C = [ C_4, C_5 ];
+  const O = matrix_from([B]).transpose();
+  const dO = matrix_from([dB]).transpose();
   
-  const [J_x, J_y] = J(C, O);
-  const J_v = J_x * dO[0] + J_y * dO[1];
+  const F = solve(C, O, dO, 1);
   
-  const bias = 13 * C(O);
-  const lambda = -(J_v + bias);
-  
-  dO[0] += J_x * lambda;
-  dO[1] += J_y * lambda;
-  
-  O[0] += dO[0] * 0.015;
-  O[1] += dO[1] * 0.015;
+  for (let i = 0; i < B.length; i++) {
+    dB[i] += F.get(i,0);
+    dB[i] *= 0.9;
+    B[i] += dB[i] * TIMESTEP;
+  }
   
   pen.clear();
-  
   pen.begin();
-  pen.circle(T, 0.02);
-  pen.circle(T, 0.01);
   
-  const t0 = new vec2_t();
-  const t1 = new vec2_t(0.3).rotate(O[0]).add(t0);
-  const t2 = new vec2_t(0.3).rotate(O[1]).add(t1);
-  
-  pen.circle(t0, 0.01);
-  pen.circle(t1, 0.01);
-  pen.circle(t2, 0.01);
-  
-  pen.line(t0, t1);
-  pen.line(t1, t2);
+  let p = new vec2_t();
+  for (let i = 0; i < B.length; i++) {
+    const t_n = new vec2_t(0, R).rotate(B[i]);
+    pen.circle(p, 0.01);
+    pen.line(p, p.add(t_n));
+    p = p.add(t_n);
+  }
   
   pen.stroke();
 }
 
-function C_1(O)
+function solve(C, T, dT, beta)
 {
-  const t0 = new vec2_t();
-  const t1 = new vec2_t(0.3).rotate(O[0]);
-  const t2 = new vec2_t(0.3).rotate(O[1]);
+  const J = J_calc(C, T);
+  const Jt = J.transpose();
+  const Jv = J.mul(dT);
+  const J_Jt = J.mul(Jt);
   
-  const P = t0.add(t1).add(t2);
+  const bias = matrix_from(C.map((C_i) => [beta / TIMESTEP * C_i(T)]));
+  const lambda = J_Jt.inverse().mul(Jv.add(bias).mulf(-1));
   
-  const V = T.sub(P);
+  const F = Jt.mul(lambda);
   
-  return V.length();
+  return F;
 }
 
-function J(C, p)
+function C_4(O)
 {
-  const h = 0.01;
+  let p = new vec2_t();
   
-  const dC_dx = (C([ O[0]+h, O[1] ]) - C([ O[0], O[1] ])) * (1/h);
-  const dC_dy = (C([ O[0], O[1]+h ]) - C([ O[0], O[1] ])) * (1/h);
+  for (let i = 0; i < O.row; i++) {
+    const t_n = new vec2_t(0, R).rotate(O.get(i,0));
+    p = p.add(t_n);
+  }
   
-  return [ dC_dx, dC_dy ];
+  const d = p.sub(T);
+  
+  return d.x;
 }
+
+function C_5(O)
+{
+  let p = new vec2_t();
+  for (let i = 0; i < O.row; i++) {
+    const t_n = new vec2_t(0, R).rotate(O.get(i,0));
+    p = p.add(t_n);
+  }
+  
+  const d = p.sub(T);
+  
+  return d.y;
+}
+
+function J_calc(C, p)
+{
+  const h = 0.001;
+  
+  const J = new matrix_t(C.length, p.row);
+  
+  for (let i = 0; i < C.length; i++) {
+    const C_p = C[i](p);
+    
+    for (let j = 0; j < p.row; j++) {
+      const p_j = p.get(j, 0);
+      
+      p.set(j, 0, p_j + h);
+      const dC_dp_j = (C[i](p) - C_p) / h;
+      p.set(j, 0, p_j);
+      
+      J.set(i, j, dC_dp_j);
+    }
+  }
+  
+  return J;
+}
+update();
 
 setInterval(function() {
   update();
