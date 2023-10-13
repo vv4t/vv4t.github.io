@@ -284,7 +284,7 @@ class body_t {
     for (const plane of this.hull.planes) {
       const depth = point.dot(plane.normal) - plane.distance;
       
-      if (depth > 0.1) {
+      if (depth > 0.0) {
         inside = false;
         break;
       } else if (depth > min_depth){
@@ -298,6 +298,52 @@ class body_t {
     } else {
       return null;
     }
+  }
+  
+  check_vertex(body, point)
+  {
+    let min_depth = -100.0;
+    let min_plane = null;
+    let inside = true;
+    
+    for (const plane of this.hull.planes) {
+      const depth = point.dot(plane.normal) - plane.distance;
+      
+      if (depth > 0) {
+        inside = false;
+        break;
+      } else {
+        const max_depth = body.furthest_in(plane).dot(plane.normal) - plane.distance;
+        
+        if (max_depth > min_depth) {
+          min_depth = max_depth;
+          min_plane = plane;
+        }
+      }
+    }
+    
+    if (inside) {
+      return min_plane;
+    } else {
+      return null;
+    }
+  }
+  
+  furthest_in(plane)
+  {
+    let max_depth = 0.0;
+    let max_vertex = null;
+    
+    for (const vertex of this.hull.vertices) {
+      const depth = vertex.dot(plane.normal) - plane.distance;
+      
+      if (depth < max_depth) {
+        max_depth = depth;
+        max_vertex = vertex;
+      }
+    }
+    
+    return max_vertex;
   }
   
   clip_plane(plane)
@@ -322,7 +368,7 @@ class body_t {
     const contacts = [];
     
     for (const vertex of body.hull.vertices) {
-      const plane = this.check_point(vertex);
+      const plane = this.check_vertex(body, vertex);
       
       if (plane) {
         const p1 = vertex.add(plane.normal.mulf(-plane.normal.dot(vertex) + plane.distance));
@@ -333,7 +379,7 @@ class body_t {
     }
     
     for (const vertex of this.hull.vertices) {
-      const plane = body.check_point(vertex);
+      const plane = body.check_vertex(this, vertex);
       
       if (plane) {
         const p1 = vertex;
@@ -379,19 +425,18 @@ const square = [
 const bodies = Array.from({length: 8}, () => {
   let p = new vec2_t(0, 0.1);
   
-  /*
   const random_hull = Array.from({length: 8}, () => {
     const old_p = p.copy();
     p = p.rotate(-Math.random());
     return old_p;
   });
-  */
-  
+  /*
   const s = 1.0 + Math.random();
   
   const random_hull = square.map((v) => {
     return v.mulf(s)
   });
+  */
   
   const body = new body_t(new hull_t(random_hull));
   body.move(new vec2_t(Math.random(), Math.random()));
@@ -434,11 +479,19 @@ function update()
     C.push(new point_constraint_t(selected, input.get_mouse_pos()));
   }
   
+  let do_friction = [];
+  
+  for (let i = 0; i < bodies.length; i++) {
+    do_friction.push(false);
+  }
+  
   for (let i = 0; i < bodies.length; i++) {
     for (let j = i + 1; j < bodies.length; j++) {
       const contacts = bodies[i].clip_body(bodies[j]);
       
       for (const contact of contacts) {
+        do_friction[i] = true;
+        do_friction[j] = true;
         C.push(new contact_constraint_t(bodies[i], bodies[j], contact));
       }
     }
@@ -456,12 +509,17 @@ function update()
   
   for (let i = 0; i < 10; i++) {
     for (const c of C) {
-      c.solve(0.25);
+      c.solve(0.15);
     }
   }
   
   for (const body of bodies) {
     body.integrate();
+  }
+  
+  for (let i = 0; i < bodies.length; i++) {
+    if (do_friction[i])
+      bodies[i].vel = bodies[i].vel.mulf(0.8);
   }
   
   for (const body of bodies) {
