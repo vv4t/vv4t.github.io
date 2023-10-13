@@ -141,7 +141,11 @@ class contact_constraint_t {
     this.contact = contact;
     this.r1 = contact.p1.sub(a.pos);
     this.r2 = contact.p2.sub(b.pos);
+    this.tangent1 = a.vel.add(contact.normal.mulf(-a.vel.dot(contact.normal))).normalize();
+    this.tangent2 = a.vel.add(contact.normal.mulf(-a.vel.dot(contact.normal))).normalize();
     this.impulse = 0.0;
+    this.tangent_impulse1 = 0.0;
+    this.tangent_impulse2 = 0.0;
   }
   
   get(T)
@@ -155,6 +159,88 @@ class contact_constraint_t {
     const p2 = pos2.add(this.r2.rotate(rot2));
     
     return p1.dot(this.contact.normal) - p2.dot(this.contact.normal);
+  }
+  
+  solve_friction1(beta)
+  {
+    const T = matrix_from([ [ 0.0, 0.0, 0.0 ] ]).transpose();
+    const dT = matrix_from([ [ this.a.vel.x, this.a.vel.y, this.a.ang ] ]).transpose();
+    
+    const C_f = {
+      get: (Cf_T) => {
+        const shift = new vec2_t(T.get(0, 0), T.get(1, 0));
+        const rot = T.get(2, 0);
+        const p1 = shift.add(this.r1.rotate(rot));
+        
+        return p1.dot(this.tangent1);
+      }
+    };
+    
+    if (this.tangent1.dot(this.tangent1) < 0.001)
+      return;
+    
+    const I = 0.01;
+    
+    const M = matrix_from([
+      [1, 0, 0],
+      [0, 1, 0],
+      [0, 0, 1/I]
+    ]);
+    
+    const [Jt, lambda] = solve([ C_f ], M, T, dT, 0.0001);
+    const delta = lambda.get(0, 0);
+    
+    const old_impulse = this.tangent_impulse1;
+    this.tangent_impulse1 += delta;
+    this.tangent_impulse1 = clamp(this.tangent_impulse1, -this.impulse, this.impulse);
+    lambda.set(0, 0, this.tangent_impulse1 - old_impulse);
+    
+    const F = Jt.mul(lambda);
+    
+    this.a.vel.x += F.get(0, 0);
+    this.a.vel.y += F.get(1, 0);
+    this.a.ang += F.get(2, 0) / I;
+  }
+  
+  solve_friction2(beta)
+  {
+    const T = matrix_from([ [ 0.0, 0.0, 0.0 ] ]).transpose();
+    const dT = matrix_from([ [ this.b.vel.x, this.b.vel.y, this.b.ang ] ]).transpose();
+    
+    const C_f = {
+      get: (Cf_T) => {
+        const shift = new vec2_t(T.get(0, 0), T.get(1, 0));
+        const rot = T.get(2, 0);
+        const p1 = shift.add(this.r1.rotate(rot));
+        
+        return p1.dot(this.tangent2);
+      }
+    };
+    
+    if (this.tangent2.dot(this.tangent2) < 0.001)
+      return;
+    
+    const I = 0.01;
+    
+    const M = matrix_from([
+      [1, 0, 0],
+      [0, 1, 0],
+      [0, 0, 1/I]
+    ]);
+    
+    const [Jt, lambda] = solve([ C_f ], M, T, dT, 0.0001);
+    const delta = lambda.get(0, 0);
+    
+    const old_impulse = this.tangent_impulse2;
+    this.tangent_impulse2 += delta;
+    this.tangent_impulse2 = clamp(this.tangent_impulse2, -this.impulse, this.impulse);
+    lambda.set(0, 0, this.tangent_impulse2 - old_impulse);
+    
+    const F = Jt.mul(lambda);
+    
+    this.b.vel.x += F.get(0, 0);
+    this.b.vel.y += F.get(1, 0);
+    this.b.ang += F.get(2, 0) / I;
   }
   
   solve(beta)
@@ -190,6 +276,9 @@ class contact_constraint_t {
     this.b.vel.x += F.get(3, 0);
     this.b.vel.y += F.get(4, 0);
     this.b.ang += F.get(5, 0) / I;
+    
+    this.solve_friction1(0.0001);
+    this.solve_friction2(0.0001);
   }
 };
 
@@ -199,6 +288,7 @@ class static_contact_constraint_t {
     this.body = body;
     this.contact = contact;
     this.r1 = contact.p1.sub(body.pos);
+    this.tangent = body.vel.add(contact.normal.mulf(-body.vel.dot(contact.normal))).normalize();
     this.impulse = 0.0;
   }
   
@@ -209,6 +299,42 @@ class static_contact_constraint_t {
     const p1 = pos.add(this.r1.rotate(rot));
     
     return p1.dot(this.contact.normal) - this.contact.p2.dot(this.contact.normal);
+  }
+  
+  solve_friction(beta)
+  {
+    const T = matrix_from([ [ 0.0, 0.0, 0.0 ] ]).transpose();
+    const dT = matrix_from([ [ this.body.vel.x, this.body.vel.y, this.body.ang ] ]).transpose();
+    
+    const C_f = {
+      get: (Cf_T) => {
+        const shift = new vec2_t(T.get(0, 0), T.get(1, 0));
+        const rot = T.get(2, 0);
+        const p1 = shift.add(this.r1.rotate(rot));
+        
+        return p1.dot(this.tangent);
+      }
+    };
+    
+    if (this.tangent.dot(this.tangent) < 0.001)
+      return;
+    
+    const I = 0.01;
+    
+    const M = matrix_from([
+      [1, 0, 0],
+      [0, 1, 0],
+      [0, 0, 1/I]
+    ]);
+    
+    const [Jt, lambda] = solve([ C_f ], M, T, dT, beta);
+    const delta = lambda.get(0, 0);
+    
+    const F = Jt.mul(lambda);
+    
+    this.body.vel.x += F.get(0, 0);
+    this.body.vel.y += F.get(1, 0);
+    this.body.ang += F.get(2, 0) / I;
   }
   
   solve(beta)
@@ -237,6 +363,8 @@ class static_contact_constraint_t {
     this.body.vel.x += F.get(0, 0);
     this.body.vel.y += F.get(1, 0);
     this.body.ang += F.get(2, 0) / I;
+    
+    this.solve_friction(0.0001);
   }
 };
 
@@ -424,19 +552,20 @@ const square = [
 
 const bodies = Array.from({length: 8}, () => {
   let p = new vec2_t(0, 0.1);
-  
+  /*
   const random_hull = Array.from({length: 8}, () => {
     const old_p = p.copy();
     p = p.rotate(-Math.random());
     return old_p;
   });
-  /*
+  */
+  
   const s = 1.0 + Math.random();
   
   const random_hull = square.map((v) => {
     return v.mulf(s)
   });
-  */
+  
   
   const body = new body_t(new hull_t(random_hull));
   body.move(new vec2_t(Math.random(), Math.random()));
@@ -479,19 +608,11 @@ function update()
     C.push(new point_constraint_t(selected, input.get_mouse_pos()));
   }
   
-  let do_friction = [];
-  
-  for (let i = 0; i < bodies.length; i++) {
-    do_friction.push(false);
-  }
-  
   for (let i = 0; i < bodies.length; i++) {
     for (let j = i + 1; j < bodies.length; j++) {
       const contacts = bodies[i].clip_body(bodies[j]);
       
       for (const contact of contacts) {
-        do_friction[i] = true;
-        do_friction[j] = true;
         C.push(new contact_constraint_t(bodies[i], bodies[j], contact));
       }
     }
@@ -515,11 +636,6 @@ function update()
   
   for (const body of bodies) {
     body.integrate();
-  }
-  
-  for (let i = 0; i < bodies.length; i++) {
-    if (do_friction[i])
-      bodies[i].vel = bodies[i].vel.mulf(0.8);
   }
   
   for (const body of bodies) {
