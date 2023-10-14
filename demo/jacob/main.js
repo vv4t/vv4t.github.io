@@ -641,7 +641,7 @@ function update()
   
   for (let i = 0; i < 10; i++) {
     for (const c of C) {
-      c.solve(0.25);
+      c.solve(0.15);
     }
   }
   
