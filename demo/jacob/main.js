@@ -70,7 +70,7 @@ class hull_t {
       const n = p1.sub(p2).cross_up(1).normalize().mulf(0.02);
       const m = p1.add(p2).mulf(0.5);
       
-      pen.line(m, m.add(n));
+      // pen.line(m, m.add(n));
       pen.line(p1, p2);
     }
   }
@@ -639,7 +639,7 @@ function update()
     }
   }
   
-  for (let i = 0; i < 10; i++) {
+  for (let i = 0; i < 30; i++) {
     for (const c of C) {
       c.solve(0.15);
     }
