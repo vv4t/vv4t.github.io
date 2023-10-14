@@ -146,7 +146,7 @@ class contact_constraint_t {
     this.impulse = 0.0;
     this.tangent_impulse1 = 0.0;
     this.tangent_impulse2 = 0.0;
-    this.mu = 0.5;
+    this.mu = 0.2;
   }
   
   get(T)
