@@ -142,10 +142,11 @@ class contact_constraint_t {
     this.r1 = contact.p1.sub(a.pos);
     this.r2 = contact.p2.sub(b.pos);
     this.tangent1 = a.vel.add(contact.normal.mulf(-a.vel.dot(contact.normal))).normalize();
-    this.tangent2 = a.vel.add(contact.normal.mulf(-a.vel.dot(contact.normal))).normalize();
+    this.tangent2 = b.vel.add(contact.normal.mulf(-b.vel.dot(contact.normal))).normalize();
     this.impulse = 0.0;
     this.tangent_impulse1 = 0.0;
     this.tangent_impulse2 = 0.0;
+    this.mu = 0.5;
   }
   
   get(T)
@@ -176,8 +177,9 @@ class contact_constraint_t {
       }
     };
     
-    if (this.tangent1.dot(this.tangent1) < 0.001)
+    if (this.tangent1.dot(this.tangent1) < 0.00001) {
       return;
+    }
     
     const I = 0.01;
     
@@ -187,12 +189,12 @@ class contact_constraint_t {
       [0, 0, 1/I]
     ]);
     
-    const [Jt, lambda] = solve([ C_f ], M, T, dT, 0.0001);
+    const [Jt, lambda] = solve([ C_f ], M, T, dT, beta);
     const delta = lambda.get(0, 0);
     
     const old_impulse = this.tangent_impulse1;
     this.tangent_impulse1 += delta;
-    this.tangent_impulse1 = clamp(this.tangent_impulse1, -this.impulse, this.impulse);
+    this.tangent_impulse1 = clamp(this.tangent_impulse1, -this.impulse * this.mu, this.impulse * this.mu);
     lambda.set(0, 0, this.tangent_impulse1 - old_impulse);
     
     const F = Jt.mul(lambda);
@@ -211,14 +213,15 @@ class contact_constraint_t {
       get: (Cf_T) => {
         const shift = new vec2_t(T.get(0, 0), T.get(1, 0));
         const rot = T.get(2, 0);
-        const p1 = shift.add(this.r1.rotate(rot));
+        const p1 = shift.add(this.r2.rotate(rot));
         
         return p1.dot(this.tangent2);
       }
     };
     
-    if (this.tangent2.dot(this.tangent2) < 0.001)
+    if (this.tangent2.dot(this.tangent2) < 0.00001) {
       return;
+    }
     
     const I = 0.01;
     
@@ -228,12 +231,12 @@ class contact_constraint_t {
       [0, 0, 1/I]
     ]);
     
-    const [Jt, lambda] = solve([ C_f ], M, T, dT, 0.0001);
+    const [Jt, lambda] = solve([ C_f ], M, T, dT, beta);
     const delta = lambda.get(0, 0);
     
     const old_impulse = this.tangent_impulse2;
     this.tangent_impulse2 += delta;
-    this.tangent_impulse2 = clamp(this.tangent_impulse2, -this.impulse, this.impulse);
+    this.tangent_impulse2 = clamp(this.tangent_impulse2, -this.impulse * this.mu, this.impulse * this.mu);
     lambda.set(0, 0, this.tangent_impulse2 - old_impulse);
     
     const F = Jt.mul(lambda);
@@ -550,7 +553,7 @@ const square = [
   new vec2_t(+0.08, -0.05)
 ];
 
-const bodies = Array.from({length: 8}, () => {
+const bodies = Array.from({length: 9}, () => {
   let p = new vec2_t(0, 0.1);
   /*
   const random_hull = Array.from({length: 8}, () => {
@@ -605,6 +608,14 @@ function update()
   }
   
   if (selected) {
+    if (input.get_key(key.code("Q"))) {
+      selected.ang += 0.1;
+    }
+    
+    if (input.get_key(key.code("E"))) {
+      selected.ang -= 0.1;
+    }
+    
     C.push(new point_constraint_t(selected, input.get_mouse_pos()));
   }
   
@@ -630,7 +641,7 @@ function update()
   
   for (let i = 0; i < 10; i++) {
     for (const c of C) {
-      c.solve(0.15);
+      c.solve(0.25);
     }
   }
   
