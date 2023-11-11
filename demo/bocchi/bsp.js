@@ -67,7 +67,7 @@ obj_load("bsp.obj", (model) => {
     }
   }
   
-  bsp = collapse_brush_R(faces, [], []);
+  bsp = collapse_brush_R(faces, []);
 });
 
 function clip_sphere_bsp_R(sphere, node, clip_nodes, min_dist, min_node)
@@ -131,20 +131,48 @@ function clip_ray_bsp_R(a, b, node, under, hit_node)
   }
 }
 
+function clip_point_bsp_R(p, node, min_node, min_dist)
+{
+  if (!node) {
+    return null;
+  }
+  
+  const dist = p.dot(node.plane.normal) - node.plane.distance - 0.5;
+  
+  if (dist < 0) {
+    if (dist > min_dist) {
+      min_node = node;
+      min_dist = dist;
+    }
+    
+    if (!node.behind) {
+      return min_node;
+    }
+    
+    return clip_point_bsp_R(p, node.behind, min_node, min_dist);
+  } else {
+    return clip_point_bsp_R(p, node.ahead, min_node, min_dist);
+  }
+}
+
 function clip_trace_bsp_R(a, b, node, under, hit_node)
 {
   if (!node) {
     if (under) {
+      if (!hit_node) {
+        return clip_point_bsp_R(a, bsp, null, -1000.0);
+      }
+      
       return hit_node;
     }
     
     return null;
   }
   
-  const plane = new plane_t(node.plane.normal, node.plane.distance);
+  const plane = new plane_t(node.plane.normal, node.plane.distance + 0.5);
   
-  const depth_a = a.dot(plane.normal) - plane.distance - 0.5;
-  const depth_b = b.dot(plane.normal) - plane.distance - 0.5;
+  const depth_a = a.dot(plane.normal) - plane.distance;
+  const depth_b = b.dot(plane.normal) - plane.distance;
   
   if (depth_a < 0) {
     if (depth_b < 0) {
@@ -163,7 +191,7 @@ function clip_trace_bsp_R(a, b, node, under, hit_node)
   }
 }
 
-function collapse_brush_R(faces, hull, splits)
+function collapse_brush_R(faces, hull)
 {
   if (faces.length == 0 && hull.length > 0) {
     const color = "rgb(" + Math.random() * 255 + "," +  Math.random() * 255 + "," + Math.random() * 255 + ")";
@@ -171,7 +199,7 @@ function collapse_brush_R(faces, hull, splits)
     
     let node = null;
     
-    const bevels = do_bevel(hull, splits);
+    const bevels = do_bevel(hull);
     
     for (const bevel of bevels) {
       const new_node = new bsp_node_t(bevel);
@@ -194,15 +222,9 @@ function collapse_brush_R(faces, hull, splits)
   new_hull.push(...middle);
   new_hull.push(...b);
   
-  const new_splits = [];
-  new_splits.push(...splits);
-  new_splits.push(new plane_t(plane.normal.mulf(-1), -plane.distance));
-  
-  splits.push(plane);
-  
   const node = new bsp_node_t(plane);
-  node.behind = collapse_brush_R(behind, new_hull, splits);
-  node.ahead = collapse_brush_R(ahead, a, new_splits);
+  node.behind = collapse_brush_R(behind, new_hull);
+  node.ahead = collapse_brush_R(ahead, a);
   
   return node;
 }
@@ -211,17 +233,23 @@ function do_bevel(hull, splits)
 {
   const bevels = [];
   
-  for (const split of splits) {
+  for (const split of hull) {
+    const plane = face_to_plane(split);
+    
     for (const face of hull) {
+      if (face === split) {
+        continue;
+      }
+      
       const shared = face.vertices.filter(
         (v) => {
-          const delta = v.dot(split.normal) - split.distance;
+          const delta = v.dot(split.normal) - plane.distance;
           return Math.abs(delta) < DOT_DEGREE;
         }
       );
       
-      if (shared.length > 0 && shared.length < 3 && face.normal.dot(split.normal) < +DOT_DEGREE) {
-        const normal = face.normal.add(split.normal).normalize();
+      if (shared.length > 0 && face.normal.dot(plane.normal) < +DOT_DEGREE) {
+        const normal = face.normal.add(plane.normal).normalize();
         const distance = shared[0].dot(normal);
         
         bevels.push(new plane_t(normal, distance));
@@ -351,16 +379,31 @@ function clip_bsp(sphere, delta_pos, bsp)
   /*
   let next_pos = sphere.pos.add(delta_pos);
   
-  const hit_node = clip_trace_bsp_R(sphere.pos, next_pos, bsp, false, null);
-  
-  if (hit_node) {
-    const lambda = -(next_pos.dot(hit_node.plane.normal) - hit_node.plane.distance - 0.001 - 0.5);
-    next_pos = next_pos.add(hit_node.plane.normal.mulf(lambda));
+  for (let i = 0; i < 2; i++) {
+    const hit_node = clip_point_bsp_R(next_pos, bsp, null, -1000.0);
+    
+    if (hit_node) {
+      const lambda = -(next_pos.dot(hit_node.plane.normal) - hit_node.plane.distance - 0.5);
+      next_pos = next_pos.add(hit_node.plane.normal.mulf(lambda));
+    }
   }
   
   return next_pos;
   */
   
+  let next_pos = sphere.pos.add(delta_pos);
+  for (let i = 0; i < 2; i++) {
+    const hit_node = clip_trace_bsp_R(sphere.pos, next_pos, bsp, false, null);
+    
+    if (hit_node) {
+      const lambda = -(next_pos.dot(hit_node.plane.normal) - hit_node.plane.distance - 0.001 - 0.5);
+      next_pos = next_pos.add(hit_node.plane.normal.mulf(lambda));
+    }
+  }
+  
+  return next_pos;
+  
+  /*
   const clip_nodes = [];
   const old_pos = sphere.pos.copy();
   
@@ -377,6 +420,7 @@ function clip_bsp(sphere, delta_pos, bsp)
   }
   
   sphere.pos = old_pos;
+  */
   
   return next_pos;
 }
