@@ -176,7 +176,7 @@ function split_face(face, plane)
   } else if (middle.length == 3) {
     if (face.normal.dot(plane.normal) < -1+DOT_DEGREE) {
       return [ [], [], [face] ];
-    } else if (face.normal.dot(plane.normal) > 1-DOT_DEGREE) {
+    } else if (face.normal.dot(plane.normal) > 1 - DOT_DEGREE) {
       return [ [], [face], [] ];
     } else {
       return [ [], [], [] ];
