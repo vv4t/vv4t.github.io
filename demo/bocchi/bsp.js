@@ -70,317 +70,144 @@ obj_load("bsp.obj", (model) => {
   bsp = collapse_brush_R(faces, [], []);
 });
 
-function clip_sphere_bsp_R(sphere, node, clip_nodes, min_dist, min_node)
-{
-  if (!node)
-    return;
-  
-  const max_d = sphere.pos.dot(node.plane.normal) - node.plane.distance + sphere.radius;
-  const min_d = sphere.pos.dot(node.plane.normal) - node.plane.distance - sphere.radius;
-  
-  if (max_d > 0)
-    clip_sphere_bsp_R(sphere, node.ahead, clip_nodes, min_dist, min_node);
-  
-  if (min_d < 0) {
-    if (min_d > min_dist && !node.bevel) {
-      min_dist = min_d;
-      min_node = node;
-    }
-    
-    if (!node.behind)
-      clip_nodes.push(min_node);
-    
-    clip_sphere_bsp_R(sphere, node.behind, clip_nodes, min_dist, min_node);
-  }
-}
-
 const ray_data = {
   start: null,
-  end: null,
-  show: 0,
-  part: 0
+  end: null
 };
 
 function clip_ray_bsp_R(a, b, node, under, hit_node)
 {
   if (!node) {
-    if (under) {
-      const ray_offset = new vec3_t(0.01, 0.01, 0.01);
-      const x = a.add(ray_offset);
-      const y = b.add(ray_offset);
+    if (under && hit_node) {
+      const c = a.sub(hit_node.plane.normal.mulf(0.5));
       
-      if (ray_data.part === ray_data.show || ray_data.show < 0) {
-        pen.begin();
-        pen.color("green");
-        pen3d.circle(x, 0.05);
-        pen3d.circle(y, 0.05);
-        pen3d.line(x, y);
-        
-        pen.stroke();
-        pen.color("black");
-      }
-        
-      ray_data.part++;
-      
-      return { hit: a, the_node: hit_node };
-    } else if (ray_data.part === ray_data.show || ray_data.show < 0) {
       pen.begin();
-      pen.color("blue");
-      pen3d.circle(a, 0.05);
-      pen3d.circle(b, 0.05);
-      pen3d.line(a, b);
+      pen.color("red");
+      pen3d.circle(c, 0.05);
+      pen3d.line(c, c.add(hit_node.plane.normal.mulf(0.1)));
       pen.stroke();
-      pen.color("black");
     }
     
-    ray_data.part++;
-    return { hit: null, the_node: null };
+    pen.begin();
+    pen.color("blue");
+    pen3d.circle(a, 0.05);
+    pen3d.circle(b, 0.05);
+    pen3d.line(a, b);
+    pen.stroke();
+    pen.color("black");
+    
+    return;
   }
   
   const R = 0.5;
-  let short_hit = null;
-  let short_node = null;
-  
   
   if (node.plane.normal.dot(b.sub(a)) > 0) {
-    const plane_up = new plane_t(node.plane.normal, node.plane.distance + R);
-    const plane_down = new plane_t(node.plane.normal, node.plane.distance - R);
+    const hit_over = ray_over(new plane_t(node.plane.normal, node.plane.distance - R), a, b);
+    const hit_under = ray_under(new plane_t(node.plane.normal, node.plane.distance + R), a, b);
     
-    const hit_under = ray_under(plane_up, a, b);
     if (hit_under) {
       const [u, v, split] = hit_under;
-      const { hit, the_node } = clip_ray_bsp_R(u, v, node.behind, true, hit_node);
-      
-      if (hit) {
-        if (hit.dot(plane_up.normal) - plane_up.distance < +DOT_DEGREE) {
-          short_hit = hit;
-          short_node = the_node;
-        }
-      }
+      clip_ray_bsp_R(u, v, node.behind, true, hit_node);
     }
     
-    const hit_over = ray_over(plane_down, a, b);
     if (hit_over) {
       const [u, v, split] = hit_over;
-      const { hit, the_node } = clip_ray_bsp_R(u, v, node.ahead, false, hit_node);
-      
-      if (hit) {
-        if (hit.dot(plane_down.normal) - plane_down.distance > -DOT_DEGREE) {
-          if (short_hit && short_node) {
-            const dist1 = hit.dot(b.sub(a));
-            const dist2 = short_hit.dot(b.sub(a));
-            
-            if (dist2 > dist1) {
-              short_hit = hit;
-              short_node = the_node;
-            }
-          } else {
-            short_hit = hit;
-            short_node = the_node;
-          }
-        }
-      }
+      clip_ray_bsp_R(u, v, node.ahead, false, hit_node);
     }
   } else {
-    const plane_up = new plane_t(node.plane.normal, node.plane.distance + R);
-    const plane_down = new plane_t(node.plane.normal, node.plane.distance - R);
+    const hit_over = ray_over(new plane_t(node.plane.normal, node.plane.distance - R), a, b);
+    const hit_under = ray_under(new plane_t(node.plane.normal, node.plane.distance + R), a, b);
     
-    const hit_over = ray_over(plane_down, a, b);
     if (hit_over) {
       const [u, v, split] = hit_over;
-      const { hit, the_node } = clip_ray_bsp_R(u, v, node.ahead, false, hit_node);
-      
-      if (hit) {
-        if (hit.dot(plane_down.normal) - plane_down.distance > -DOT_DEGREE) {
-          short_hit = hit;
-          short_node = the_node;
-        }
-      }
+      clip_ray_bsp_R(u, v, node.ahead, false, hit_node);
     }
     
-    const hit_under = ray_under(plane_up, a, b);
     if (hit_under) {
       const [u, v, split] = hit_under;
-      
-      let hit;
-      let the_node;
-      
       if (split) {
-        const clip = clip_ray_bsp_R(u, v, node.behind, true, node);
-        hit = clip.hit;
-        the_node = clip.the_node;
+        clip_ray_bsp_R(u, v, node.behind, true, node);
       } else {
-        const clip = clip_ray_bsp_R(u, v, node.behind, true, hit_node);
-        hit = clip.hit;
-        the_node = clip.the_node;
-      }
-      
-      if (hit) {
-        if (hit.dot(plane_up.normal) - plane_up.distance < +DOT_DEGREE) {
-          if (short_hit && short_node) {
-            const dist1 = hit.dot(b.sub(a));
-            const dist2 = short_hit.dot(b.sub(a));
-            
-            if (dist2 > dist1) {
-              short_hit = hit;
-              short_node = the_node;
-            }
-          } else {
-            short_hit = hit;
-            short_node = the_node;
-          }
-        }
+        clip_ray_bsp_R(u, v, node.behind, true, hit_node);
       }
     }
   }
-  
-  return { hit: short_hit, the_node: short_node };
 }
 
-function clip_point_bsp_R(p, node, min_node, min_dist)
+function clip_point_bsp_R(p, node, clip_nodes, min_node, min_dist)
 {
-   if (!node)
+  if (!node)
     return;
   
-  const max_d = p.dot(node.plane.normal) - node.plane.distance + 0.5;
-  const min_d = p.dot(node.plane.normal) - node.plane.distance - 0.5;
+  const R = 0.5
   
-  let hit = null;
-  let dist1 = 1000.0;
+  const max_d = p.dot(node.plane.normal) - node.plane.distance + R;
+  const min_d = p.dot(node.plane.normal) - node.plane.distance - R;
   
   if (max_d > 0) {
-    hit = clip_point_bsp_R(p, node.ahead, min_node, min_dist);
-    if (hit) {
-      dist1 = p.dot(hit.plane.normal) - hit.plane.distance;
-    }
+    clip_sphere_bsp_R(sphere, node.ahead, clip_nodes, min_dist, min_node);
   }
   
   if (min_d < 0) {
-    if (min_d > min_dist && !node.bevel) {
+    if (min_d > min_dist) {
       min_dist = min_d;
       min_node = node;
     }
     
     if (!node.behind) {
-      return min_node;
+      clip_nodes.push(min_node);
     }
     
-    const hit2 = clip_point_bsp_R(p, node.behind, min_node, min_dist);
-    
-    if (hit2) {
-      const dist2 = p.dot(hit2.plane.normal) - hit2.plane.distance;
-      
-      if (dist2 < dist1) {
-        hit = hit2;
-      }
-    }
+    clip_point_bsp_R(sphere, node.behind, clip_nodes, min_dist, min_node);
   }
-  
-  return hit;
 }
 
-function clip_trace_bsp_R(a, b, node, under, hit_node)
+
+function clip_trace_bsp_R(clip_nodes, a, b, node, under, hit_node)
 {
- if (!node) {
+  if (!node) {
     if (under) {
-      return { hit: a, the_node: hit_node };
-    }    
+      if (hit_node) {
+        clip_nodes.push(hit_node);
+      }
+    }
     
-    return { hit: null, the_node: null };
+    return;
   }
   
   const R = 0.5;
-  let short_hit = null;
-  let short_node = null;
   
   if (node.plane.normal.dot(b.sub(a)) > 0) {
-    const plane_up = new plane_t(node.plane.normal, node.plane.distance + R);
-    const plane_down = new plane_t(node.plane.normal, node.plane.distance - R);
+    const hit_over = ray_over(new plane_t(node.plane.normal, node.plane.distance - R), a, b);
+    const hit_under = ray_under(new plane_t(node.plane.normal, node.plane.distance + R), a, b);
     
-    const hit_under = ray_under(plane_up, a, b);
     if (hit_under) {
       const [u, v, split] = hit_under;
-      const { hit, the_node } = clip_trace_bsp_R(u, v, node.behind, true, hit_node);
-      
-      if (hit) {
-        short_hit = hit;
-        short_node = the_node;
-      }
+      clip_trace_bsp_R(clip_nodes, u, v, node.behind, true, hit_node);
     }
     
-    const hit_over = ray_over(plane_down, a, b);
     if (hit_over) {
       const [u, v, split] = hit_over;
-      const { hit, the_node } = clip_trace_bsp_R(u, v, node.ahead, false, hit_node);
-      
-      if (hit) {
-        if (short_hit && short_node) {
-          const dist1 = hit.dot(b.sub(a));
-          const dist2 = short_hit.dot(b.sub(a));
-          
-          if (dist2 > dist1) {
-            short_hit = hit;
-            short_node = the_node;
-          }
-        } else {
-          short_hit = hit;
-          short_node = the_node;
-        }
-      }
+      clip_trace_bsp_R(clip_nodes, u, v, node.ahead, false, hit_node);
     }
   } else {
-    const plane_up = new plane_t(node.plane.normal, node.plane.distance + R);
-    const plane_down = new plane_t(node.plane.normal, node.plane.distance - R);
+    const hit_over = ray_over(new plane_t(node.plane.normal, node.plane.distance - R), a, b);
+    const hit_under = ray_under(new plane_t(node.plane.normal, node.plane.distance + R), a, b);
     
-    const hit_over = ray_over(plane_down, a, b);
     if (hit_over) {
       const [u, v, split] = hit_over;
-      const { hit, the_node } = clip_trace_bsp_R(u, v, node.ahead, false, hit_node);
-      
-      if (hit) {
-        if (hit.dot(plane_down.normal) - plane_down.distance > -DOT_DEGREE) {
-          short_hit = hit;
-          short_node = the_node;
-        }
-      }
+      clip_trace_bsp_R(clip_nodes, u, v, node.ahead, false, hit_node);
     }
     
-    const hit_under = ray_under(plane_up, a, b);
     if (hit_under) {
       const [u, v, split] = hit_under;
-      
-      let hit;
-      let the_node;
-      
       if (split) {
-        const clip = clip_trace_bsp_R(u, v, node.behind, true, node);
-        hit = clip.hit;
-        the_node = clip.the_node;
+        clip_trace_bsp_R(clip_nodes, u, v, node.behind, true, node);
       } else {
-        const clip = clip_trace_bsp_R(u, v, node.behind, true, hit_node);
-        hit = clip.hit;
-        the_node = clip.the_node;
-      }
-      
-      if (hit) {
-        if (short_hit && short_node) {
-          const dist1 = hit.dot(b.sub(a));
-          const dist2 = short_hit.dot(b.sub(a));
-          
-          if (dist2 > dist1) {
-            short_hit = hit;
-            short_node = the_node;
-          }
-        } else {
-          short_hit = hit;
-          short_node = the_node;
-        }
+        clip_trace_bsp_R(clip_nodes, u, v, node.behind, true, hit_node);
       }
     }
   }
-  
-  return { hit: short_hit, the_node: short_node };
-
 }
 
 function ray_over(plane, a, b)
@@ -613,67 +440,28 @@ function split_face(face, plane)
 
 function clip_bsp(sphere, delta_pos, bsp)
 {
-  /*
-  let next_pos = sphere.pos.add(delta_pos);
-  
-  for (let i = 0; i < 3; i++) {
-    // console.log("THINGGG");
-    const hit_node = clip_point_bsp_R(next_pos, bsp, null, -1000.0);
-    
-    if (hit_node) {
-      const lambda = -(next_pos.dot(hit_node.plane.normal) - hit_node.plane.distance - 0.5);
-      next_pos = next_pos.add(hit_node.plane.normal.mulf(lambda));
-    }
-  }
-  
-  return next_pos;
-  */
-  
-  let next_pos = sphere.pos.add(delta_pos);
-  for (let i = 0; i < 3; i++) {
-    let { hit, the_node } = clip_trace_bsp_R(sphere.pos, next_pos, bsp, false, null);
-    
-    if (!the_node) {
-      the_node = clip_point_bsp_R(next_pos, bsp, null, -1000.0);
-    }
-    
-    if (the_node) {
-      const lambda = -(next_pos.dot(the_node.plane.normal) - the_node.plane.distance - 0.001 - 0.5);
-      next_pos = next_pos.add(the_node.plane.normal.mulf(lambda));
-    }
-  }
-  
-  return next_pos;
-  
-  /*
   const clip_nodes = [];
   const old_pos = sphere.pos.copy();
   
   sphere.pos = sphere.pos.add(delta_pos);
-  clip_sphere_bsp_R(sphere, bsp, clip_nodes, -1000, null);
+  // clip_sphere_bsp_R(sphere, bsp, clip_nodes, -1000, null);
   
   let next_pos = sphere.pos.copy();
   
+  clip_trace_bsp_R(clip_nodes, old_pos, next_pos, bsp, false, null);
+  
   for (const clip_node of clip_nodes) {
-    const lambda = -(next_pos.dot(clip_node.plane.normal) - clip_node.plane.distance - sphere.radius);
+    const lambda = -(next_pos.dot(clip_node.plane.normal) - clip_node.plane.distance - 0.001 - sphere.radius);
     
-    if (lambda > 0)
+    if (lambda > 0) {
       next_pos = next_pos.add(clip_node.plane.normal.mulf(lambda));
+    }
   }
   
   sphere.pos = old_pos;
-  */
   
   return next_pos;
 }
-
-input.bind(key.code("F"), () => {
-  ray_data.show++;
-});
-
-input.bind(key.code("G"), () => {
-  ray_data.show = -1;
-});
 
 function update()
 {
@@ -683,21 +471,12 @@ function update()
   pen.clear();
   
   if (input.get_key(key.code(" "))) {
-    ray_data.show = -1;
     ray_data.start = sphere.pos;
     ray_data.end = sphere.pos.add(new vec3_t(0,0,5).rotate_zxy(camera.rot));
   }
   
   if (ray_data.start && ray_data.end) {
-    ray_data.part = 0;
-    const { hit, the_node } = clip_ray_bsp_R(ray_data.start, ray_data.end, bsp);
-    
-    if (hit && the_node) {
-      pen.begin();
-      const p = hit.add(the_node.plane.normal.mulf(0.5));
-      pen3d.line(hit, hit.add(the_node.plane.normal.mulf(0.5)));
-      pen.stroke();
-    }
+    clip_ray_bsp_R(ray_data.start, ray_data.end, bsp);
   }
   
   /*
