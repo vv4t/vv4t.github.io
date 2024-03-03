@@ -42,8 +42,6 @@ function reset_bob() {
     bob_arr[i].u = u;
     bob_arr[i].u_t = u + u_t * k;
   }
-  
-  // stop = true;
 }
 
 const TIMESTEP = 0.015;

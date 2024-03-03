@@ -56,16 +56,34 @@ function update()
   free_look();
   
   if (input.get_key(key.code(" "))) {
-    const front_offset = new vec3_t(0, 0, 5).rotate_zxy(camera.rot);
+    const front_offset = new vec3_t(0, 0, 1).rotate_zxy(camera.rot);
     const front_pos = camera.pos.add(front_offset);
     
-    for (let i = -2; i <= 2; i++) {
-      for (let j = -2; j <= 2; j++) {
-        const x = clamp(Math.floor(front_pos.x + i), 1, BOB_NUM - 2);
-        const y = clamp(Math.floor(front_pos.z + j), 1, BOB_NUM - 2);
+    const n = 20;
+    const m = 5;
+    
+    for (let i = -n; i <= n; i++) {
+      for (let j = -n; j <= n; j++) {
+        const x = i + front_pos.x;
+        const y = j + front_pos.z;
         
-        bob_arr[y][x].u = front_pos.y;
-        bob_arr[y][x].u_t = front_pos.y;
+        const t = Math.sqrt(i*i + j*j);
+        
+        if (t < m || t > n)
+          continue;
+        
+        const theta = (t - m) / (n-m) * Math.PI;
+        
+        const u = 0.6 * Math.sin(theta) + front_pos.y * 0.01;
+        const u_t = -0.6 * Math.cos(theta) / n * Math.sqrt(c);
+        
+        const xp = Math.floor(x);
+        const yp = Math.floor(y);
+        
+        if (xp >= 0 && yp >= 0 && xp < BOB_NUM && yp < BOB_NUM) {
+          bob_arr[yp][xp].u = u;
+          bob_arr[yp][xp].u_t = u + u_t * k;
+        }
       }
     }
   }
@@ -184,7 +202,7 @@ function reset()
     }
   }
   
-  stop = true;
+  // stop = true;
 }
 
 class sphere_t {
