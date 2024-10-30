@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <style>
+p {
+  font-family: monospace;
+  overflow-wrap: break-word;
+}
+
+canvas {
+  width: 100%;
+}
+
+h1 {
+  text-align: center;
+  margin-bottom: 0;
+}
+    </style>
+  </head>
+  <body>
+    <h1>Image based Stegranography</h1>
+    <p>DWT-DCT method to hide messages inside an image. Implementation based off of this paper: <a href="https://www.researchgate.net/publication/26621646_Combined_DWT-DCT_digital_image_watermarking">https://www.researchgate.net/publication/26621646_Combined_DWT-DCT_digital_image_watermarking</a></p>
+    <label for="img">Select image:</label>
+    <input type="file" id="source" name="img" accept="image/*">
+    <br>
+    <textarea placeholder="Enter text to encode here" cols=62 id="text"></textarea>
+    <br>
+    <button id="encode">Encode</button>
+    <button id="decode">Decode</button>
+    <button id="save">Save</button>
+    <br>
+    <p id="output"></p>
+    <canvas width="512" height="512" style="border: 1px solid" id="buffer"></canvas>
+    <script src="main.js" type="module"></script>
+  </body>
+</html>
