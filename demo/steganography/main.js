@@ -10,6 +10,7 @@ const c = document.getElementById("buffer");
 const ctx = c.getContext("2d");
 
 const gain = 16;
+const mainSize = 1024;
 
 function encodeImage(image) {
   const message = text.value;
@@ -24,7 +25,7 @@ function encodeImage(image) {
   const imageData = ctx.getImageData(0, 0, size, size);
   const dataArray = new Float32Array(size * size);
   convertYCbCr(imageData, dataArray);
-  recursiveEncode(dataArray, size, 512, binaryString);
+  recursiveEncode(dataArray, size, mainSize, binaryString);
   convertRGB(imageData, dataArray);
   ctx.putImageData(imageData, 0, 0);
   
@@ -39,7 +40,9 @@ function recursiveEncode(dataArray, currentSize, desiredSize, binaryString) {
     idwtApply(dataArray, currentSize, LL, LH, HL, HH);
   } else {
     const [ LL, LH, HL, HH ] = dwtApply(dataArray, currentSize);
-    imageEncode(HH, currentSize / 2, binaryString);
+    const [ LL2, LH2, HL2, HH2 ] = dwtApply(HH, currentSize);
+    imageEncode(HH2, currentSize / 4, binaryString);
+    idwtApply(HH, currentSize / 2, LL2, LH2, HL2, HH2);
     idwtApply(dataArray, currentSize, LL, LH, HL, HH);
   }
 }
@@ -54,7 +57,7 @@ function decodeImage(image) {
   const imageData = ctx.getImageData(0, 0, size, size);
   const dataArray = new Float32Array(size * size);
   convertYCbCr(imageData, dataArray);
-  const decodedMessage = recursiveDecode(dataArray, size, 512);
+  const decodedMessage = recursiveDecode(dataArray, size, mainSize);
   const binaryString = decodedMessage.join("");
   const asciiString = convertASCII(binaryString);
   
@@ -70,7 +73,8 @@ function recursiveDecode(dataArray, currentSize, desiredSize) {
     return recursiveDecode(LL, currentSize / 2, desiredSize);
   } else {
     const [ LL, LH, HL, HH ] = dwtApply(dataArray, currentSize);
-    return imageDecode(HH, currentSize / 2);
+    const [ LL2, LH2, HL2, HH2 ] = dwtApply(HH, currentSize / 2);
+    return imageDecode(HH2, currentSize / 4);
   }
 }
 
@@ -354,10 +358,10 @@ function idctApply(dctSquare) {
 
 function getPo2Size(width, height) {
   if (height < width) {
-    const size = Math.max(Math.pow(2, Math.ceil(Math.log(height)/Math.log(2))), 512);
+    const size = Math.max(Math.pow(2, Math.ceil(Math.log(height)/Math.log(2))), mainSize);
     return [ size, Math.round(size * width / height), size ];
   } else {
-    const size = Math.max(Math.pow(2, Math.ceil(Math.log(width)/Math.log(2))), 512);
+    const size = Math.max(Math.pow(2, Math.ceil(Math.log(width)/Math.log(2))), mainSize);
     return [ size, size, Math.round(size * height / width) ];
   }
 }
@@ -375,6 +379,12 @@ document.getElementById("decode").addEventListener("click", () => {
 });
 
 document.getElementById("save").addEventListener("click", () => {
-  const imageUrl = c.toDataURL("image/jpeg");
+  const imageUrl = c.toDataURL("image/jpeg").replace("image/jpeg", "image/octet-stream");
   window.open(imageUrl, "_blank");
+});
+
+document.addEventListener("paste", (e) => {
+  const dT = e.clipboardData || window.clipboardData;
+  const file = dT.files[ 0 ];
+  console.log( file );
 });
