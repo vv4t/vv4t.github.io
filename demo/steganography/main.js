@@ -34,6 +34,7 @@ const buffer = document.getElementById("buffer");
 const display = document.getElementById("display");
 const textCount = document.getElementById("count");
 const gain = document.getElementById("gain");
+const seed = document.getElementById("seed");
 const ctx = buffer.getContext("2d");
 
 const mainSize = 512;
@@ -193,8 +194,8 @@ function convertRGB(imageData, dataArray) {
 }
 
 function imageEncode(dataArray, size, binaryString) {
-  const S_0 = cyrb128("seed for p0");
-  const S_1 = cyrb128("seed for p1");
+  const S_0 = cyrb128(seed.value + "1");
+  const S_1 = cyrb128(seed.value + "2");
 
   const P_0 = sfc32(S_0[0], S_0[1], S_0[2], S_0[3]);
   const P_1 = sfc32(S_1[0], S_1[1], S_1[2], S_1[3]);
@@ -216,8 +217,8 @@ function imageEncode(dataArray, size, binaryString) {
 }
 
 function imageDecode(dataArray, size) {
-  const S_0 = cyrb128("seed for p0");
-  const S_1 = cyrb128("seed for p1");
+  const S_0 = cyrb128(seed.value + "1");
+  const S_1 = cyrb128(seed.value + "2");
 
   const P_0 = sfc32(S_0[0], S_0[1], S_0[2], S_0[3]);
   const P_1 = sfc32(S_1[0], S_1[1], S_1[2], S_1[3]);

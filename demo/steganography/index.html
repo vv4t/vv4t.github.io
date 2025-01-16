@@ -53,21 +53,26 @@ html, body {
           <label for="img">Select, drop or paste image:</label>
           <input type="file" id="source" name="img" accept="image/*">
           <br>
-          <textarea placeholder="Enter text to encode here" cols=62 rows=15 id="text"></textarea>
+          <textarea placeholder="Enter text to encode here" cols=90 rows=15 id="text"></textarea>
           <br>
           <p id="count"></p>
           <button id="encode">Encode</button>
           <button id="decode">Decode</button>
           <button id="save">Save</button>
           <br>
-          Message Intensity: <input type="range" id="gain" min="8" max="32" value="12">
+          Intensity: <input type="range" id="gain" min="8" max="32" value="12">
+          Seed (key): <input type="text" id="seed" value="default">
           <br>
-          Tip: After encoding, you can right click and copy the image to clipboard.
+          Note:
+          <ul>
+            <li>Recipient will need the same message seed to decode (insecure pseudo-encryption).</li>
+            <li>After encoding, you can right click and copy the image to clipboard.</li>
+          </ul>
         </div>
         <div>
           <p id="info">WIDTHxHEIGHT</p>
           <img id="target" hidden></img>
-          <canvas id="preview" width="512" height="512" style="border: 1px solid;"></canvas>
+          <canvas id="preview" width="600" height="600" style="border: 1px solid;"></canvas>
         </div>
       </div>
       <p id="output"></p>
