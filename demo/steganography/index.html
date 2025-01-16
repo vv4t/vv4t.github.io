@@ -43,10 +43,16 @@ html, body {
         file format independent, and somewhat compression resistant such that
         it could be sent over the internet trivially, though the end result is
         fairly inconsistent. My main test for this was to paste it into discord
-        then decoding the compressed preview version.  This generally halved
-        the resolution and for some images it could fairly successfully decode.
+        then decoding the compressed preview version.
+        
+        This is somewhat successful when the original image was already small
+        such that the discord preview version was relatively the same
+        resolution. Also, images with uniform backgrounds may also be clearer.
+        
         I was thinking of adding encryption for the message, but I realise now
-        that any errors might mess up the entire encryption process.
+        that any errors might mess up the entire encryption process. Instead,
+        knowing the seed of the noise pattern the message is embedded in can be
+        used a pseudo decryption key for secret messages.
       </p>
       <div style="display: flex;">
         <div style="padding-right: 20px">
