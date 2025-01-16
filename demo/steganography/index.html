@@ -2,7 +2,7 @@
 <html>
   <head>
     <style>
-p {
+body {
   font-family: monospace;
   overflow-wrap: break-word;
 }
@@ -15,22 +15,65 @@ h1 {
   text-align: center;
   margin-bottom: 0;
 }
+
+input {
+  vertical-align: middle;
+}
+
+html, body {
+  padding: 0;
+  margin: 0;
+}
+
+#drop {
+  padding-left: 20px;
+  width: 95vw;
+  height: 95vh;
+}
     </style>
   </head>
   <body>
-    <h1>Image based Stegranography</h1>
-    <p>DWT-DCT method to hide messages inside an image. Implementation based off of this paper: <a href="https://www.researchgate.net/publication/26621646_Combined_DWT-DCT_digital_image_watermarking">https://www.researchgate.net/publication/26621646_Combined_DWT-DCT_digital_image_watermarking</a></p>
-    <label for="img">Select image:</label>
-    <input type="file" id="source" name="img" accept="image/*">
-    <br>
-    <textarea placeholder="Enter text to encode here" cols=62 id="text"></textarea>
-    <br>
-    <button id="encode">Encode</button>
-    <button id="decode">Decode</button>
-    <button id="save">Save</button>
-    <br>
-    <p id="output"></p>
-    <canvas width="512" height="512" style="border: 1px solid" id="buffer"></canvas>
-    <script src="main.js" type="module"></script>
+    <div id="drop">
+      <h1>Image based Steganography</h1>
+      <p>DWT-DCT method to hide messages inside an image. Implementation based off of this paper
+        <a href="https://pdfs.semanticscholar.org/1c47/f281c00cffad4e30deff48a922553cb04d17.pdf">
+          Ali Al-Haj, "Combined DWT-DCT Digital Image Watermarking", September 2007
+        </a>.
+        The main goal of this was to encode a message in an image which was
+        file format independent, and somewhat compression resistant such that
+        it could be sent over the internet trivially, though the end result is
+        fairly inconsistent. My main test for this was to paste it into discord
+        then decoding the compressed preview version.  This generally halved
+        the resolution and for some images it could fairly successfully decode.
+        I was thinking of adding encryption for the message, but I realise now
+        that any errors might mess up the entire encryption process.
+      </p>
+      <div style="display: flex;">
+        <div style="padding-right: 20px">
+          <label for="img">Select, drop or paste image:</label>
+          <input type="file" id="source" name="img" accept="image/*">
+          <br>
+          <textarea placeholder="Enter text to encode here" cols=62 rows=15 id="text"></textarea>
+          <br>
+          <p id="count"></p>
+          <button id="encode">Encode</button>
+          <button id="decode">Decode</button>
+          <button id="save">Save</button>
+          <br>
+          Message Intensity: <input type="range" id="gain" min="8" max="32" value="12">
+          <br>
+          Tip: After encoding, you can right click and copy the image to clipboard.
+        </div>
+        <div>
+          <p id="info">WIDTHxHEIGHT</p>
+          <img id="target" hidden></img>
+          <canvas id="preview" width="512" height="512" style="border: 1px solid;"></canvas>
+        </div>
+      </div>
+      <p id="output"></p>
+      <canvas width="512" height="512" style="border: 1px solid" id="buffer" hidden></canvas>
+      <img id="display"></img>
+      <script src="main.js" type="module"></script>
+    </div>
   </body>
 </html>
