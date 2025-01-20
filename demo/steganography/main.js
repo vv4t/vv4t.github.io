@@ -93,7 +93,7 @@ function decodeImage(image) {
   const binaryString = decodedMessage.join("");
   const asciiString = convertASCII(binaryString);
   
-  output.innerHTML = "Decoded ASCII: " + asciiString;
+  output.innerText = "Decoded ASCII: " + asciiString;
   // output.innerHTML += "<br>";
   // output.innerHTML += "Binary Decoding: " + binaryString;
 }
@@ -365,10 +365,49 @@ function changeTarget(src) {
   target.src = src;
   target.onload = () => {
     info.innerHTML = `${target.width}x${target.height}`;
-    preview.width = target.width / target.height * 512;
-    preview.getContext("2d").drawImage(target, 0, 0, preview.width, preview.height);
+
+    // Modified to retain aspect ratio of image while remaining in the bounds of the parent div
+    // Good for large images, or images which weird aspect ratios. Downsides are lossless quality on preview
+    // Possibly could be fixed by changing canvas filtering / .width .height attributes on canvas element itself?
+    // - dceit.
+
+    const newWidth = target.width;
+    const newHeight = target.height;
+
+    const parentWidth = preview.parentElement.offsetWidth;
+    const parentHeight = preview.parentElement.offsetHeight;
+
+    const aspectRatio = newWidth / newHeight;
+
+    let displayWidth, displayHeight;
+
+    if (newWidth > parentWidth || newHeight > parentHeight) {
+      if (parentWidth / aspectRatio <= parentHeight) {
+        displayWidth = parentWidth;
+        displayHeight = parentWidth / aspectRatio;
+      } else {
+        displayHeight = parentHeight;
+        displayWidth = parentHeight * aspectRatio;
+      }
+    } else {
+      displayWidth = newWidth;
+      displayHeight = newHeight;
+    }
+
+    const previewWidthPercentage = (displayWidth / parentWidth) * 100;
+    const previewHeightPercentage = (displayHeight / parentHeight) * 100;
+
+    preview.style.width = `${Math.min(previewWidthPercentage, 100)}%`;
+    preview.style.height = `${Math.min(previewHeightPercentage, 100)}%`;
+    
+    const ctx = preview.getContext("2d");
+    preview.height = 512;
+    ctx.clearRect(0, 0, preview.width, preview.height); // Clear the canvas
+    ctx.drawImage(target, 0, 0, preview.width, preview.height);
   };
 }
+
+
 
 imageUpload.addEventListener("change", (e) => {
   changeTarget(window.URL.createObjectURL(imageUpload.files[0]));
