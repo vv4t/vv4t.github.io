@@ -20,6 +20,8 @@ const files = [
   [ "assets/data/LOG1.txt", "text" ],
   [ "assets/data/LOG2.txt", "text" ],
   [ "assets/data/LOG3.txt", "text" ],
+  [ "assets/data/LOG4.txt", "text" ],
+  [ "assets/data/LOG5.txt", "text" ],
   [ "assets/data/SWARM.txt", "text" ],
   [ "assets/data/MACHINER.txt", "text" ],
   [ "assets/data/HUMAN.txt", "text" ],
