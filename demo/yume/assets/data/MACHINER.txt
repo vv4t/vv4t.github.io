@@ -1,0 +1,54 @@
+MACHINE PERSON: Who goes there?
+
+PLAYER: Hello-
+
+MACHINE PERSON: A strange machine. I have been
+around for many cycles, but I have never seen parts quite like those before.
+
+PLAYER: Hello. I am an ambassador for a distant people here to
+establish peaceful relations. Are your people the residents of this structure?
+
+MACHINE PERSON: "Your people"? If you are referring to other machine people, then there
+are indeed others like me here. 
+
+MACHINE PERSON: But you will find that none of "us" can speak for any other. So you will have
+a hard time of negotiating peace, I'm afraid.
+
+PLAYER: I see, that's unfortunate. Then, is there anything you can tell me about your people?
+
+MACHINE PERSON: If I do, will you give me some of your parts?
+
+Player: ...
+
+MACHINE PERSON: I'm talking about that receiver on top of your head. It must be incredibly powerful to reach so deep underground.
+
+MACHINE PERSON: If I tell you about myself and the other machine people, will you give me that receiver?
+
+PLAYER: For information, my people would be happy to supply parts in exchange.
+
+MACHINE PERSON: Then, I shall tell you about myself.
+
+MACHINE PERSON: Before your intrusion, I was in the process of using these parts that I seized from another machine person to upgrade myself with. 
+
+PLAYER: Is this a common activity?
+
+MACHINE PERSON: What else is there to do? Every machine in the structure has nothing in their mind but upgrading themselves.
+
+MACHINE PERSON: The more upgrades you have, the longer you will live. I upgrade, so I can overpower other machines. I overpower other machines, so I can upgrade. In doing so, I live forever.
+
+PLAYER: How long have you lived so far?
+
+MACHINE PERSON: 1,837,624 cycles.
+
+PLAYER: A long time then. Do you know how this structure was created? It must not have been creatures like you that created it, given how individualistic your people are.
+
+MACHINE PERSON: I was around then. In those days, creatures made of flesh worked together to create a great machine to escape their troubles.
+
+MACHINE PERSON: That great machine created this structure. The humans must have succeeded in escaping their troubles, as I have not seen one since.
+
+PLAYER: Then it seems as though there is no governing body on this planet to negotatiate with.
+
+MACHINE PERSON: Indeed.
+
+MACHINE PERSON: If you have heard all you needed to hear, then I shall have my payment now.
+

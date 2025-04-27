@@ -1,0 +1,37 @@
+-- BEGIN LOG --
+
+It appears that this structure has made contact with from some branch of the
+federation before. I have discovered a relief which engraves a standard meta
+language decoding scheme, following RFC:A:43.
+
+As is detailed in the RFC, the engraving describes an Atomic Fact and Relations
+Tensor. The tensor describes facts as the set of relations between two objects.
+We can describe each relation as a matrix and match each abstract object with
+every other. The entry is true if the relation holds. Though what each relation
+and object is unknown, if we construct a fact and relation tensor for our own
+language, we can compare it to tensors from other languages, connecting concepts
+between languages by finding matching relations.
+
+For example, it seems that Relation #49 seems to be the "equality" or "A is B"
+relation because it holds true for the objects I believe to be "zero" and
+"empty". That is, "zero is empty". Then Relation #7131 "A moves at a B rate" holds
+between ("time", "linear") and ("falling", "quadratic"). That is, "time moves at
+a linear rate" and "falling moves at a quadratic rate", which is physically
+true. Nonsensical relations are also false. For example "equality" does not hold
+between the magnitudes "3" and "4" because "3 equals 4" is absurd.
+
+Some standard notes of the language. Object #941 holding equality to "entity",
+"omnipresent" and "omniscience", what I believe to be "God" in their language,
+seems to hold equality to "exists". That is, they seem to believe in some
+God. Expectedly, Object #1340, seems to be "morality" and also holds equality to
+"exists".
+
+But another more interesting note, I have deduced Object #149, to be the "self",
+but the connection to most of our known languages seems to be loose. That is,
+the speakers of this language do not seem to hold a traditional concept of self.
+Comparing its relations to objects that are generally learned later in
+civilisation, we can somewhat track its usage over time. It seems in this
+language that the concept of "self" has eroded to become more nonesenical as
+time has progressed, at least in relation to our known languages.
+
+-- END LOG --

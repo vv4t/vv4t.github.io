@@ -1,0 +1,21 @@
+"use strict"
+
+import { body_t } from "./body.js";
+import { sprite_t } from "./sprite.js";
+import { vec2_t, vec3_t } from "../util/math.js";
+
+export class swarm_t {
+  constructor(id, pos) {
+    this.id = id;
+    this.body = new body_t();
+    this.body.pos = pos;
+    this.sprite = new sprite_t(new vec2_t(1,1), 140);
+    this.sprite.animate(140, 4, 0.1);
+  }
+
+  move_to_target(target) {
+    const delta = target.add(this.body.pos.mulf(-1));
+    this.body.vel = delta.mulf(0.05);
+    return delta.dot(delta) < 0.25;
+  }
+};

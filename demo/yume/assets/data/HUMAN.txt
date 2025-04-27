@@ -1,0 +1,16 @@
+HUMAN: Hello.
+
+PLAYER: Hello. I am an ambassador for a distant people here to
+establish peaceful relations. Do your people govern this structure?
+
+HUMAN: No, and I'm unsure whether anyone runs this structure. I am a part of a group of nomads that roam this structure.
+
+PLAYER: Do you have any clues as to how I can find the administration if it exists?
+
+HUMAN: Ahead of here, there is an elevator which goes down.
+
+HUMAN: Take it down 4532 levels. Neither I nor my group have travelled so far down but there is a myth in my group that the structure's creators dwell below.
+
+PLAYER: Thank you.
+
+HUMAN: Good luck.

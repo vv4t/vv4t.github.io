@@ -1,0 +1,111 @@
+
+deviates from any reference materials so mostly just making shit up tbbh
+
+- "how does form affect identity"
+  - how has form defined their mortality and how has this affected their perception of self
+  - for each character we examine what form they have, how their mortality is
+    shaped by this, how they view their self/ego and its consequences
+
+- the net (lore)
+  - the city is essentially the infrastructure hosting/running the net
+  - people used to upload their conscious to the net
+  - one must relinquish their individuality to become part of it
+  - eventually became a collective conscious
+  - the huge expanse of conscious forms a singular conscious
+  - separated from the real world now
+  - originally humans chose to upload themselves to the net
+  - or otherwise stay in the real world and adminster control over the city via the net using a special gene
+  - after a virus, humans no longer have the gene to control the city
+  - the nature of the net, it became a bystander isolated from the real world and let city go into chaos
+  - ego and form
+    - a mechanical immortal form but with no sense of self
+    - the interconnectedness of everyone means that there is no individuality
+    - everyone simply understands everyone else and on a mass level this evens any sense of desire, individuality or ego
+
+gameplay events
+
+- city surface
+  - sand environment
+  - tiny creatures on surface which eventually form whole
+    - can't survive in interior
+    - will claim to be exiled from the net
+    - lives off the heat radiating from the city
+    - mimic the net but can't due to being limited by biological form
+    - too invidual to form greater whole, too weak to survive alone
+    - experiences consciousness only when the creatures group together
+    - ego and form
+      - a limbo state of biological conoscious immortality but also mortal
+      - their consciousness generally stays preserved
+      - however, the flux of each invidual creature dying/being disrupted affects the cognitive ability of the conscious
+      - asks the question of: what use is a continued conscious if you cannot control when it is active and the consistency of your thoughts/memories
+      - is almost a prisoner in his form
+      - however lacks the resolve to abandon his ego
+
+- down the stairs
+  - meet other extraterrestrial traveller
+    - at this point he is a damaged machine part
+    - moved his consciousness into a machine using city technology
+    - powered by radiating EM waves from city
+    - once had a biological form
+    - used to be part of species surviving on a comet but landed on the city
+    - wishes to join the net because he is lonely
+    - but doesn't understand how to abandon his ego
+    - ego and form
+      - transition state between biological and mechanical
+      - still mortal
+      - desire for immortality
+      - desire for connection but still retaining inviduality
+  - the player picks up the traveller to bring along
+
+the player walks around various structures
+
+- inside a large chamber
+  - meet humans
+    - live as a nomadic tribe wandering across liveable areas of the city
+    - survives off pipe sludge - chemical soup as byproduct of city operations
+    - ancestors didn't upload consciousness to the net
+    - the virus stopped them from being able to control the city
+    - must avoid detection triggering authority security alert
+    - ego and form
+      - biological and mortal
+      - player is surprised there is a biological human living within the city
+      - human understands that he will die at some point
+      - because of biological needs, believes that living is to desire
+      - thinks that to have an immortal ego is to face infinity, and that actions then have no meaning
+      - instead one is best immortal by proxy of ideas
+      - argues that his offspring is 99% him and that his individual ego isn't particularly special
+      - instead through his descendants he lives and faces life again and again
+      - the best versions of himself remain when his ideas a voluntarily passed on
+      - recounts a pre-city story that has been passed on from his anscestors for ages
+
+- after more walking
+  - elevator
+    - used to be a silicon life
+    - at some point wanted to join the net
+    - became evelator operator
+    - stayed at the position and eventually embedded himself in the elevator
+    - when someone uses the elevator he activates and move
+    - when no one is on the elevator he is idle
+    - feels that he is close to becoming a part of the net because he longer has any desire to join the net
+  - states that the ride will be 80 years to reach an adminstrated section of the city
+  - the player uses time warp to skip the travel
+
+- inside a room with a ritual setup (like the manga panel)
+  - silicon life (cultist)
+    - has moved their conscious into a mechanical form using similar tech to the net
+    - but are not part of the net, allowing them to retain their inviduality
+    - originated from people who wanted to attain immortality via cybernetics but didn't want to submit their individuality to the net
+    - continues to exist by making other mechanical objects inhabitable
+    - uses the ritual to conjure "essence" from the net to any mechanical parts they want to adopt
+    - they aim to grow in power and are hyper invidiaulist and compoetitive over cybernetic enhancements
+    - the extraterrestrial traveller joins the cultist in his endeavour and offers himself
+    - cultist performs ritual and absorbs traveller
+    - then aims to attack the player for their robotic parts
+  - player uses technology to defend against the attack
+
+- administrator
+  - detects anomolous change in gravity field from the player's defense, determines there is extraterrestrial life present
+  - is able to invoke an automatic diplomacy act to intervene and stop the threat
+  - lore dumps the rest of the story to the player
+  - player decides that the city is not worth having alliance with
+  END.

@@ -1,0 +1,41 @@
+-- BEGIN LOG --
+
+CYCLE:2431
+
+This is a record on BODY:B:612. As is established in PROCEDURE:E:314, a record
+is to be kept of any expeditions and such records should be neutral to any
+reader, assuming no body of knowledge; for the circumstance that this record be
+referenced in future use in the case that the current adminstration has become
+defunct. Please use this record to assist in any future expeditions to this
+body.
+
+An anonomolous body had been observed several thousand light cycles away which
+emits a strange EM signature. Bursts of high intensity EM pulses have been
+recorded from the body. Furthermore, records from other bases corroborate the
+fact that these bursts are omni-directional. The sheer energy required for such
+a phenomonon to occur is indeed, anomolous and potentially a cause for concern.
+Upon further examination of this body, it we have observed a steady stream of
+gravity waves also orginating from it. It is clear that the behaviour of this
+body does not originate from any known natural causes. Hence, I have been
+assigned the mission to investigate this.
+
+For the warp, 50 cycles have elapsed while my ship has returned from stasis. I
+can say without a doubt that I have arrived at the anomolous body. It appears
+to be in a rigid and continuous disk shape, artificial in its construction. Yet
+its span rivals the orbit of most solar systems. To hold its shape, it appears
+to be manipulating its own gravitational field to orient anything to be
+parallel to the axis of the disk. But even though it is in a disk shape, it
+does not even appear to be spinning. It seems to simply adrift without any
+particular external influence.
+
+The surface of the body seems to be a coarse iron oxide sand. And there does
+seem to be a respirable atmosphere suitable for carbon based life forms. I
+cannot seem to get any readings on the insides of the structure. Hence, I have
+made the decision to land the ship and deploy a reconnaisance drone.
+
+In accordance with the mission, I will be seeking contact with any forms of
+life. No doubt, the construction of this structure implies that some advanced
+civilisation existed at some point here. Ideally, they are still around and I
+can meet with their governing bodies to strike any form of diplomatic relations.
+
+-- END LOG --

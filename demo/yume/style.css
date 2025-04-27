@@ -1,0 +1,38 @@
+body {
+  color: white;
+  justify-content: center;
+  width: 100%;
+  overflow-x: hidden;
+  background-color: black;
+  display: flex;
+  font-family: monospace;
+}
+
+.side {
+  margin-left: 5px;
+  display: block;
+  color: #aaffaa;
+  text-align: center;
+}
+
+button {
+  background-color: transparent;
+  border: none;
+  border-bottom: 1px solid;
+  border-radius: 3px;
+  color: #aaffaa;
+}
+
+button:hover {
+  color: #ddffdd;
+}
+
+textarea {
+  padding: 10px;
+  margin-bottom: 10px;
+  border: 1px solid #003300;
+  vertical-align: top;
+  resize: none;
+  color: #aaffaa;
+  background-color: black;
+}
