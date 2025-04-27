@@ -185,6 +185,7 @@ If this is using one of our known standards, some distant branch of the federati
     play_conversation("HUMAN", () => { 
       make_log_available(4);
       this.player.start();
+      submit_text("-- Entry for LOG 4 saved, The Nomads --\n\n");
     });
     this.flags["human_cutscene_has_played"] = true;
   }
