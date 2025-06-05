@@ -22,12 +22,17 @@ async function run() {
 
   const view_pos = new Float32Array(3);
   const view_yaw = new Float32Array(1);
+  const cube_pos = new Float32Array(3);
   const view_pitch = new Float32Array(1);
-  const time = new Float32Array(1);
-  scene.add_data("ubo", [view_pos, view_yaw, view_pitch, time]);
+  const cube_vel = new Float32Array(1);
+  scene.add_data("ubo", [view_pos, view_yaw, cube_pos, view_pitch, cube_vel]);
   
-  view_pos[0] = 1;
-  view_pos[2] = 1;
+  view_pos[0] = 4;
+  view_pos[2] = 4;
+  
+  cube_pos[0] = 1;
+  cube_pos[1] = 1;
+  cube_pos[2] = 1;
 
   scene.add_pass([], displace, [buffer3]);
   scene.add_pass([buffer3, buffer1], wave, [buffer2]);
@@ -37,6 +42,8 @@ async function run() {
   const update = () => {
     free_move(input, view_pos, view_yaw, view_pitch);
     sink_at_pool(view_pos);
+    move_cube(input, view_pos, view_yaw, view_pitch, cube_pos, cube_vel);
+    cube_fall(cube_pos, cube_vel);
     
     scene.render();
     requestAnimationFrame(update);
@@ -45,12 +52,43 @@ async function run() {
   requestAnimationFrame(update);
 }
 
+function move_cube(input, view_pos, view_yaw, view_pitch, cube_pos, cube_vel) {
+  if (!input.get_key(" ")) return;
+  
+  const forward = new vec3_t(0.0, 0.0, 2.0).rotate_x(-view_pitch[0]).rotate_y(-view_yaw[0]);
+  
+  cube_pos[0] = view_pos[0] + forward.x;
+  cube_pos[1] = view_pos[1] + forward.y;
+  cube_pos[2] = view_pos[2] + forward.z;
+  
+  cube_vel[0] = 0.0;
+}
+
+function cube_fall(cube_pos, cube_vel) {
+  let floor = -1.0;
+  
+  if (
+    cube_pos[0] > 5.0 && cube_pos[0] + 0.5 < 10.0 &&
+    cube_pos[2] > 5.0 && cube_pos[2] + 0.5 < 10.0
+  ) {
+    floor = -1.5;
+  }
+  
+  if (cube_pos[1] + cube_vel[0] > floor) {
+    cube_pos[1] += cube_vel[0];
+    cube_vel[0] -= 0.01;
+  } else {
+    cube_pos[1] = floor;
+    cube_vel[0] = 0.0;
+  }
+}
+
 function sink_at_pool(view_pos) {
   const x = view_pos[0];
   const z = view_pos[2];
   
   if (x > 5 && z > 5 && x < 10 && z < 10) {
-    view_pos[1] = -0.8;
+    view_pos[1] = -0.4;
   } else {
     view_pos[1] = 0.0;
   }

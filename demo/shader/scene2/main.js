@@ -10,19 +10,18 @@ async function run() {
   const input = new input_t(canvas);
   
   input.set_mouse_lock(true);
+
+  const shader = await scene.load_shader("shader.glsl", [ "sky" ]);
   
+  const skybox = await scene.load_cubemap("../assets/sky", "jpg");
   const buffer = scene.add_buffer(800, 600);
 
-  const shader = await scene.load_shader("shader.glsl", []);
-  const tonemap = await scene.load_shader("../util/tonemap.glsl", ["image"]);
-  
   const view_pos = new Float32Array(3);
   const view_yaw = new Float32Array(1);
   const view_pitch = new Float32Array(1);
   scene.add_data("ubo", [view_pos, view_yaw, view_pitch]);
 
-  scene.add_pass([], shader, [buffer]);
-  scene.add_pass([buffer], tonemap, []);
+  scene.add_pass([skybox], shader, []);
 
   const update = () => {
     free_move(input, view_pos, view_yaw, view_pitch);

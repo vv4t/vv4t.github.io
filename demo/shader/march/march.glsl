@@ -1,79 +1,59 @@
 #ifndef RAY_MARCH_GLSL
 #define RAY_MARCH_GLSL
 
-#define MIN_DISTANCE 0.0001
+#define MIN_DISTANCE 0.001
 #define MAX_STEPS 256
 
 #ifndef MAX_DISTANCE
   #define MAX_DISTANCE 10.0
 #endif
 
-struct trace_t {
-  float d;
-  int id;
-};
+float sdf(vec3 p, int mask);
 
-trace_t trace(int id, float d) {
-  trace_t tr;
-  tr.id = id;
-  tr.d = d;
-  return tr;
-}
-
-trace_t tr_add(trace_t a, trace_t b) {
-  if (a.d < b.d)
-    return a;
-  else
-    return b;
-}
-
-trace_t sdf(vec3 p);
-
-vec3 sdf_normal(vec3 p) {
+vec3 sdf_normal(vec3 p, int mask) {
   float dp = 0.001;
   
-  trace_t dx_a = sdf(p - vec3(dp, 0.0, 0.0));
-  trace_t dy_a = sdf(p - vec3(0.0, dp, 0.0));
-  trace_t dz_a = sdf(p - vec3(0.0, 0.0, dp));
+  float dx_a = sdf(p - vec3(dp, 0.0, 0.0), mask);
+  float dy_a = sdf(p - vec3(0.0, dp, 0.0), mask);
+  float dz_a = sdf(p - vec3(0.0, 0.0, dp), mask);
   
-  trace_t dx_b = sdf(p + vec3(dp, 0.0, 0.0));
-  trace_t dy_b = sdf(p + vec3(0.0, dp, 0.0));
-  trace_t dz_b = sdf(p + vec3(0.0, 0.0, dp));
+  float dx_b = sdf(p + vec3(dp, 0.0, 0.0), mask);
+  float dy_b = sdf(p + vec3(0.0, dp, 0.0), mask);
+  float dz_b = sdf(p + vec3(0.0, 0.0, dp), mask);
   
-  return normalize(vec3(dx_b.d - dx_a.d, dy_b.d - dy_a.d, dz_b.d - dz_a.d));
+  return normalize(vec3(dx_b - dx_a, dy_b - dy_a, dz_b - dz_a));
 }
 
-float shadow(vec3 pt, vec3 rd, float ld) {
+float shadow(vec3 pt, vec3 rd, float ld, int mask) {
   vec3 p = pt;
-  float td = 0.01;
+  float td = 0.05;
   float kd = 1.0;
   
   for (int i = 0; i < MAX_STEPS && kd > 0.01; i++) {
     p = pt + rd * td;
     
-    trace_t tr = sdf(p);
+    float d = sdf(p, mask);
+    if (td > MAX_DISTANCE || td + d > ld) break;
+    if (d < 0.001) kd = 0.0;
+    else kd = min(kd, 64.0 * d / td);
     
-    if (td > MAX_DISTANCE || td + tr.d > ld) break;
-    if (tr.d < 0.001) kd = 0.0;
-    else kd = min(kd, 16.0 * tr.d / td);
-    
-    td += tr.d;
+    td += d;
   }
   
   return kd;
 }
 
-trace_t ray_march(vec3 ro, vec3 rd) {
+float ray_march(vec3 ro, vec3 rd, int mask) {
   float td = 0.0;
   
   for (int i = 0; i < MAX_STEPS; i++) {
-    trace_t tr = sdf(ro + rd * td);
-    if (tr.d < MIN_DISTANCE) return trace(tr.id, td);
+    float d = sdf(ro + rd * td, mask);
+    if (d < MIN_DISTANCE) return td;
     if (td > MAX_DISTANCE) break;
-    td += tr.d;
+    td += d;
   }
   
-  return trace(0, MAX_DISTANCE);
+  return MAX_DISTANCE;
 }
 
 float sdf_union(float a, float b) {
@@ -81,7 +61,7 @@ float sdf_union(float a, float b) {
 }
 
 float sdf_sub(float a, float b) {
-  return max(a, -(b - 0.05));
+  return max(a, -b);
 }
 
 float sdf_and(float a, float b) {
