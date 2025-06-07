@@ -21,7 +21,7 @@ void main() {
     p.x > cube_pos.x && p.x < cube_pos.x + 0.5 && 
     p.y > cube_pos.z && p.y < cube_pos.z + 0.5 &&
     cube_pos.y < -1.0
-  ) ? cube_vel * 0.4 - 0.02 : 0.0;
+  ) ? cube_vel * 0.4 : 0.0;
   
   float a = a1 + a2;
   

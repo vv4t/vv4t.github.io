@@ -1,7 +1,7 @@
 #define MAX_DISTANCE 20.0
 
 #include "../util/math.glsl"
-#include "../march/march.glsl"
+#include "../util/march.glsl"
 
 #define MESH (1 << 0)
 #define WATER (1 << 1)
@@ -108,7 +108,7 @@ vec3 render_mesh(vec3 ro, vec3 rd, float td, int id) {
   
   vec3 L = normalize(vec3(0.1, 1.0, -1.0));
   float NdotL = max(0.0, dot(N, L));
-  float shade = shadow(p, L, MAX_DISTANCE, MESH);
+  float shade = shadow(p, L, MAX_DISTANCE, MESH, 64.0);
   
   return get_mesh_albedo(p, N, id) * (NdotL * shade + AMBIENCE);
 }
@@ -178,7 +178,7 @@ vec3 render_water(vec3 ro, vec3 rd, float td) {
   }
   
   vec3 L = normalize(vec3(0.1, 1.0, -1.0));
-  float shade = shadow(p, L, 1000.0, MESH);
+  float shade = shadow(p, L, 1000.0, MESH, 64.0);
 
   return color * (shade + AMBIENCE);
 }

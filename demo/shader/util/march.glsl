@@ -24,7 +24,7 @@ vec3 sdf_normal(vec3 p, int mask) {
   return normalize(vec3(dx_b - dx_a, dy_b - dy_a, dz_b - dz_a));
 }
 
-float shadow(vec3 pt, vec3 rd, float ld, int mask) {
+float shadow(vec3 pt, vec3 rd, float ld, int mask, float soft) {
   vec3 p = pt;
   float td = 0.05;
   float kd = 1.0;
@@ -35,7 +35,7 @@ float shadow(vec3 pt, vec3 rd, float ld, int mask) {
     float d = sdf(p, mask);
     if (td > MAX_DISTANCE || td + d > ld) break;
     if (d < 0.001) kd = 0.0;
-    else kd = min(kd, 64.0 * d / td);
+    else kd = min(kd, soft * d / td);
     
     td += d;
   }
@@ -94,6 +94,24 @@ float sdf_cylinder(vec3 p, vec3 o, float r, float h) {
 
 float sdf_plane(vec3 p, vec3 n, float d) {
   return dot(p, n) - d;
+}
+
+mat3 axis_aligned_TBN(vec3 p, int mask) {
+  vec3 N = sdf_normal(p, mask);
+  vec3 absN = abs(N);
+  
+  vec3 X = vec3(1.0, 0.0, 0.0);
+  vec3 Y = vec3(0.0, 1.0, 0.0);
+  vec3 Z = vec3(0.0, 0.0, 1.0);
+  
+  vec2 uv;
+  if (absN.z > absN.y) {
+    if (absN.z > absN.x) return mat3(X, Y, Z * sign(N.z));
+    else return mat3(Y, Z, X * sign(N.x));
+  } else {
+    if (absN.y > absN.x) return mat3(X, Z, Y * sign(N.y));
+    else return mat3(Y, Z, X * sign(N.x));
+  }
 }
 
 #endif
