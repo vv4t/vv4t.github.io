@@ -155,7 +155,7 @@ vec3 render_water(vec3 ro, vec3 rd, float td) {
   vec3 N = get_water_normal(p);
   
   vec3 albedo = vec3(0.6, 0.9, 1.0);
-  float metallic = 0.4;
+  float metallic = 0.1;
   vec3 F0 = mix(vec3(0.04), albedo, metallic);
   vec3 kS = fresnelSchlick(max(dot(N, -rd), 0.3), F0);
   vec3 kD = (vec3(1.0) - kS) * (1.0 - metallic);

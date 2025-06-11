@@ -21,7 +21,8 @@ void main() {
 export class scene_t {
   constructor(canvas) {
     initGL(canvas);
-
+    
+    this.canvas = canvas;
     this.loader = new loader_t();
     this.mesh_buffer = new mesh_buffer_t([2], 6);
     this.quad = this.mesh_buffer.push(new Float32Array([
@@ -93,7 +94,9 @@ export class scene_t {
     const pass = new pass_t(
       input.map((input) => this.buffers[input]),
       this.shaders[shader],
-      output.map((output) => this.buffers[output])
+      output.map((output) => this.buffers[output]),
+      this.canvas.width,
+      this.canvas.height
     );
     this.passes.push(pass);
   }
@@ -112,10 +115,10 @@ export class scene_t {
 };
 
 class pass_t {
-  constructor(input, shader, output) {
+  constructor(input, shader, output, width, height) {
     const bindings = output.map((buffer, i) => [ gl.COLOR_ATTACHMENT0 + i, buffer ]);
-    this.width = output.length > 0 ? Math.max(output.map((buffer) => buffer.width)) : 800;
-    this.height = output.length > 0 ? Math.max(output.map((buffer) => buffer.height)) : 600;
+    this.width = output.length > 0 ? Math.max(output.map((buffer) => buffer.width)) : width;
+    this.height = output.length > 0 ? Math.max(output.map((buffer) => buffer.height)) : height;
     this.input = input;
     this.shader = shader;
     this.target = new target_t(bindings);
