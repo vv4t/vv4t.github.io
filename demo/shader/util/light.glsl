@@ -11,7 +11,7 @@ struct light_t {
 int lights_count();
 light_t lights_get(int num);
 
-vec3 calc_point_scatter(vec3 frag_pos, vec3 view_pos) {
+vec3 calc_point_scatter(vec3 frag_pos, vec3 view_pos, float intensity) {
   vec3 total_radiance = vec3(0.0);
   
   for (int i = 0; i < lights_count(); i++) {
@@ -29,7 +29,7 @@ vec3 calc_point_scatter(vec3 frag_pos, vec3 view_pos) {
     float b = dot(frag_pos, view_dir) - c;
     float fog = atan(b / h) / h - atan(a / h) / h;
     
-    float f = 0.001 * fog;
+    float f = intensity * fog;
     
     total_radiance += f * light.radiance;
   }

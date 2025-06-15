@@ -2,7 +2,6 @@
 
 #include "../util/math.glsl"
 #include "../util/march.glsl"
-#include "../util/trace.glsl"
 #include "../util/ggx.glsl"
 #include "../util/light.glsl"
 
@@ -83,7 +82,7 @@ vec3 shade_world(vec3 p, vec3 ro, int id) {
     color = calc_point_lighting(p, V, N, vec3(0.8), 0.1, 0.5);
   }
   
-  color += calc_point_scatter(p, ro);
+  color += calc_point_scatter(p, ro, 0.001);
   
   return color;
 }

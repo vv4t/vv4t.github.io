@@ -23,7 +23,7 @@ void main() {
   
   float d2u_dt2 = d2u_dx2 + d2u_dy2;
   
-  float c = 0.4;
+  float c = 0.3;
   float u_0 = u * 2.0 - u_t + c * d2u_dt2 + a;
   
   wave = vec4(u_0 * 0.999, u * 0.999, 0.0, 1.0);
