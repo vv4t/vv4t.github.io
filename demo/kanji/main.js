@@ -4,7 +4,6 @@ const jisho_query = document.getElementById("jisho_query");
 const lookup = document.getElementById("lookup");
 
 document.getElementById("clear").addEventListener("click", () => jisho_query.innerText = "");
-jisho_query.addEventListener("click", () => jisho_query.innerText = "");
 
 function do_search(query, data) {
   const is_kanji = [...query].some(char => char.charCodeAt(0) > 127);
@@ -47,6 +46,7 @@ function search_radical(query, data) {
           document.getElementById(radical).style.backgroundColor = "#c0ffee";
         }
         
+        lookup.value = "";
         jisho_query.innerText += kanji;
         jisho_query.href = "https://jisho.org/search/" + jisho_query.innerText;
       });
