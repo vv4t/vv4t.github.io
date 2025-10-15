@@ -4,6 +4,7 @@ const jisho_query = document.getElementById("jisho_query");
 const lookup = document.getElementById("lookup");
 
 document.getElementById("clear").addEventListener("click", () => jisho_query.innerText = "");
+jisho_query.addEventListener("click", () => jisho_query.innerText = "");
 
 function do_search(query, data) {
   const is_kanji = [...query].some(char => char.charCodeAt(0) > 127);
