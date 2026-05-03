@@ -22,7 +22,7 @@ function search_kanji(query, data) {
   
   result.innerHTML = "";
   for (const radical of data.inverted_index[kanji]) {
-    result.innerHTML = `${radical} ${data.terms[radical]}; `;
+    result.innerHTML += `${radical} ${data.terms[radical]}; `;
   }
 }
 
