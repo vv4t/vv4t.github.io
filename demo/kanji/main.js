@@ -20,8 +20,9 @@ function search_kanji(query, data) {
   if (!(kanji in data.inverted_index))
     return;
   
+  result.innerHTML = "";
   for (const radical of data.inverted_index[kanji]) {
-    document.getElementById(radical).style.backgroundColor = "#c0ffee";
+    result.innerHTML = `${radical} ${data.terms[radical]}; `;
   }
 }
 
@@ -43,10 +44,6 @@ function search_radical(query, data) {
       item.innerText = kanji;
       item.style = "padding-right: 4px;"
       item.addEventListener("click", () => {
-        for (const radical of data.inverted_index[kanji]) {
-          document.getElementById(radical).style.backgroundColor = "#c0ffee";
-        }
-        
         lookup.value = "";
         jisho_query.innerText += kanji;
         jisho_query.href = "https://jisho.org/search/" + jisho_query.innerText;
@@ -60,42 +57,20 @@ async function load() {
   const request = await fetch("data.json");
   const data = await request.json();
   
-  const table = document.getElementById("map");
-  
-  let row = document.createElement("tr");
-  for (const key in data["terms"]) {
-    const value = data["terms"][key];
-    const item = document.createElement("td");
-    item.innerText = value + " " + key;
-    item.id = value;
-    row.appendChild(item);
-    
-    if (row.childElementCount == 12) {
-      table.appendChild(row);
-      row = document.createElement("tr");
-    }
-  }
-  
   const parsed_data = {
     index: data["index"],
     strokes: data["strokes"],
+    terms: invert_index(data["terms"]),
     inverted_terms: data["terms"],
     inverted_index: invert_index(data["index"]),
   };
   
   let backoff_timeout;
   lookup.addEventListener("keyup", () => {
-    reset_table(Object.values(parsed_data.inverted_terms));
     if (backoff_timeout)
       clearTimeout(backoff_timeout);
     backoff_timeout = setTimeout(() => do_search(lookup.value, parsed_data), 200);
   });
-}
-
-function reset_table(keys) {
-  for (const key of keys) {
-    document.getElementById(key).style.backgroundColor = "white";
-  }
 }
 
 function invert_index(index) {
